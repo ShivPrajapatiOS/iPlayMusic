@@ -1,0 +1,419 @@
+//
+//  PlaylistDetailsView.swift
+//  iPlayMusic
+//
+//  Created by Shiv on 09/08/26.
+//
+
+import SwiftUI
+import SkeletonUI
+import RealmSwift
+import Realm
+
+struct PlaylistDetailsView: View {
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var systemScheme
+    @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var appState: StateManager = .shared
+    
+    
+    var isDark: Bool {
+        if theme.themeMode == .system {
+            return systemScheme == .dark
+        }
+        return theme.themeMode == .dark
+    }
+    
+    @State private var showImage = false
+    
+    
+    @ObservedObject var vmPlaylist: PlaylistViewModel
+    let playlist: PlaylistModel
+        
+    var body: some View {
+        GeometryReader { geoProxy in
+#if !os(macOS)
+            ZStack {
+                
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+#else
+            ZStack {
+                ScrollView(.vertical) {
+                    VStack(spacing: 20) {
+                        HStack(spacing: 25) {
+                            RoundedRectangleWebImageView(url: URL(string: vmPlaylist.detailsPlaylist?.thumbnailURL ?? ""), thumbnail: "music.microphone", radius: 15)
+                                .frame(width: 200, height: 200)
+                                .skeleton(active: vmPlaylist.isLoading)
+                                .opacity(showImage ? 1 : 0)
+                                .scaleEffect(showImage ? 1 : 0.9) // Optional
+                                .animation(.easeOut(duration: 0.5), value: showImage)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(vmPlaylist.detailsPlaylist?.name ?? "Unknown")
+                                    .font(.system(size: 25, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.text(isDark: isDark))
+                                    .skeleton(active: vmPlaylist.isLoading)
+                                Text(vmPlaylist.detailsPlaylist?.type ?? "Unknown")
+                                    .font(.system(size: 25, weight: .regular, design: .default))
+                                    .foregroundStyle(theme.theme.accent)
+                                    .skeleton(active: vmPlaylist.isLoading)
+                                Text(vmPlaylist.detailsPlaylist?.firstname ?? "N|A")
+                                    .font(.system(size: 12, weight: .regular, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .lineLimit(3)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                    .skeleton(active: vmPlaylist.isLoading)
+                                HStack {
+                                    Button {
+                                        print("play")
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "play.fill")
+                                            Text("Play")
+                                        }
+                                        .frame(maxHeight: .infinity)
+                                        .frame(width: 135)
+                                        .foregroundStyle(Color("#FFFFFF"))
+                                        .background {
+                                            Capsule()
+                                                .fill(theme.theme.primary)
+                                        }
+                                    }
+                                    Spacer()
+                                }
+                                .buttonStyle(.plain)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 32.5)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 150, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+                        .padding(.horizontal)
+                        VStack(spacing: 15) {
+                            LazyVStack {
+                                ForEach(vmPlaylist.detailsPlaylist?.songs ?? [], id: \.id) { song in
+                                    SongItemView(song: song, isLoading: $vmPlaylist.isLoading, menuAction: { _, _ in })
+                                        .frame(height: 55)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .top) {
+                BackButtonHeaderView(backType: .playlists) {
+                    dismiss()
+                }
+            }
+            .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
+            .task {
+                await vmPlaylist.getPlaylistDetails(playlist.id)
+            }
+            .onAppear {
+                appState.isDetailScreenActive = true
+                showImage = false
+                withAnimation(.easeOut(duration: 0.5)) {
+                    showImage = true
+                }
+            }
+            .onDisappear {
+                appState.isDetailScreenActive = false
+                showImage = false
+            }
+#endif
+        }
+        .navigationBarBackButtonHidden()
+    }
+}
+
+#Preview {
+//    PlaylistDetailsView(vmPlaylist: .init(), playlist: playlist1)
+    MyPlaylistDetailsView(myPlaylist: defaultMyPlaylistObject())
+}
+
+
+struct MyPlaylistDetailsView: View {
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) private var systemScheme
+    @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var appState: StateManager = .shared
+    @StateObject private var vmMyPlaylist: MyPlaylistRealmViewModel = .init()
+    @StateObject private var network: NetworkManager = .init()
+    
+    
+    var isDark: Bool {
+        if theme.themeMode == .system {
+            return systemScheme == .dark
+        }
+        return theme.themeMode == .dark
+    }
+    
+    @State private var isShowPlaylistEdit: Bool = false
+    @State private var isShowDeleteAlert: Bool = false
+    @State private var deleteMyPlaylist: MyPlaylistRealmModel? = nil
+    
+    @State private var showImage = false
+    
+    
+    let myPlaylist: MyPlaylistRealmModel
+    
+    @ObservedResults(SongRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration()) var songs: Results<SongRealmModel>
+    
+    init(myPlaylist: MyPlaylistRealmModel) {
+        self.myPlaylist = myPlaylist
+        self._songs = ObservedResults(SongRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), filter: NSPredicate(format: "playlist_id == %@ AND isDeleted == false", myPlaylist._id.stringValue as CVarArg), sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: true))
+    }
+        
+    var body: some View {
+        GeometryReader { geoProxy in
+#if !os(macOS)
+            ZStack {
+                
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+#else
+            ZStack {
+                ScrollView(.vertical) {
+                    VStack(spacing: 20) {
+                        HStack(spacing: 25) {
+                            RoundedRectangleDataImageView(data: myPlaylist.imageData, thumbnail: "music.microphone", radius: 10)
+                                .frame(width: 200, height: 200)
+                                .skeleton(active: vmMyPlaylist.isLoading)
+                                .opacity(showImage ? 1 : 0)
+                                .scaleEffect(showImage ? 1 : 0.9)
+                                .animation(.easeOut(duration: 0.5), value: showImage)
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(myPlaylist.name)
+                                    .font(.system(size: 25, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.text(isDark: isDark))
+                                    .skeleton(active: vmMyPlaylist.isLoading)
+                                Text("Unknown Type")
+                                    .font(.system(size: 25, weight: .regular, design: .default))
+                                    .foregroundStyle(theme.theme.accent)
+                                    .skeleton(active: vmMyPlaylist.isLoading)
+                                Spacer()
+                                HStack {
+                                    Button {
+                                        print("play")
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "play.fill")
+                                            Text("Play")
+                                        }
+                                        .frame(maxHeight: .infinity)
+                                        .frame(width: 135)
+                                        .foregroundStyle(Color("#FFFFFF"))
+                                        .background {
+                                            Capsule()
+                                                .fill(theme.theme.primary)
+                                        }
+                                    }
+                                    Spacer()
+                                    Button {
+                                        Task {
+                                            do {
+                                                let likePlaylist = try await vmMyPlaylist.likeUnlikePlaylist(playlistId: myPlaylist._id, isLike: !myPlaylist.isLike)
+                                                vmMyPlaylist.errorMessage = nil
+                                                let tableReference = try await FirebaseSyncManager.shared.updateMyPlaylistSync(likePlaylist)
+                                                print("this Object isSynced: \(tableReference)")
+                                                try await FirebaseSyncManager.shared.isSync(object: likePlaylist)
+                                            } catch {
+                                                vmMyPlaylist.errorMessage = error.localizedDescription
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: myPlaylist.isLike ? "heart.fill" : "heart")
+                                            .font(.system(size: 20, weight: .light, design: .default))
+                                            .foregroundStyle(LinearGradient(colors: myPlaylist.isLike ? [.red, .pink] : [theme.subText(isDark: isDark).opacity(0.25)], startPoint: .bottomLeading, endPoint: .topTrailing))
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(height: 32.5)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 150, alignment: .leading)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200, alignment: .topLeading)
+                        .padding(.horizontal)
+                        VStack(spacing: 15) {
+                            LazyVStack {
+                                ForEach(songs, id: \._id) { song in
+                                    MySongItemView(song: song, isLoading: $vmMyPlaylist.isLoading)
+                                        .frame(height: 55)
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .top) {
+                BackButtonHeaderView(backType: .myPlaylists) { menuActionPerform($0) } backAction: {
+                    dismiss()
+                }
+            }
+            .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
+            .sheet(isPresented: $isShowPlaylistEdit) {
+                CreatePlaylistView(vmMyPlaylist: vmMyPlaylist, showCreatePlaylist: $isShowPlaylistEdit)
+            }
+            .alert("Delete Playlist?", isPresented: $isShowDeleteAlert, presenting: deleteMyPlaylist) { deleteMyPlaylist in
+                Button("Delete", role: .destructive) {
+                    Task {
+                        do {
+                            if network.isConnected {
+                                try await vmMyPlaylist.deleteDeletePlaylistById(playlistId: deleteMyPlaylist._id)
+                                dismiss()
+                            } else {
+                                try await vmMyPlaylist.softDeletePlaylistById(playlistId: deleteMyPlaylist._id)
+                                dismiss()
+                            }
+                        } catch {
+                            vmMyPlaylist.errorMessage = error.localizedDescription
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                    self.deleteMyPlaylist = nil
+                }
+            } message: { deleteMyPlaylist in
+                Text("Are you sure you want to delete '\(deleteMyPlaylist.name)'? This action cannot be undone")
+            }
+            .onAppear {
+                appState.isDetailScreenActive = true
+                showImage = false
+                withAnimation(.easeOut(duration: 0.5)) {
+                    showImage = true
+                }
+            }
+            .onDisappear {
+                appState.isDetailScreenActive = false
+                showImage = false
+            }
+#endif
+        }
+        .navigationBarBackButtonHidden()
+    }
+    
+    private func menuActionPerform(_ type: MyPlaylistMenuType) {
+        switch type {
+        case .edit:
+            vmMyPlaylist.isUpdatePlaylist = myPlaylist
+            isShowPlaylistEdit.toggle()
+        case .play:
+            print("Play")
+        case .shuffle:
+            print("shuffle")
+        case .addToQueue:
+            print("addToQueue")
+        case .delete:
+            deleteMyPlaylist = myPlaylist
+            isShowDeleteAlert = true
+        }
+    }
+}
+
+
+struct MySongItemView: View {
+    @Environment(\.colorScheme) private var systemScheme
+    @StateObject private var theme: ThemeManager = .shared
+
+    var isDark: Bool {
+        if theme.themeMode == .system {
+            return systemScheme == .dark
+        }
+        return theme.themeMode == .dark
+    }
+    
+    let song: SongRealmModel
+    @Binding var isLoading: Bool
+        
+    var body: some View {
+#if os(macOS)
+        HStack(spacing: 12) {
+            RoundedRectangleWebImageView(url: URL(string: song.image?.url ?? ""))
+                .frame(width: 40, height: 40)
+                .skeleton(active: isLoading)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(song.name ?? "Unknown") \(song.id)")
+                    .font(.system(size: 13, weight: .regular, design: .default))
+                    .foregroundStyle(theme.text(isDark: isDark))
+                    .skeleton(active: isLoading)
+//                Text(song.artists?.all?.compactMap { $0.name }.joined(separator: ", ") ?? "Unknown")
+//                    .font(.system(size: 11, weight: .light, design: .default))
+//                    .foregroundStyle(theme.subText(isDark: isDark))
+//                    .skeleton(active: isLoading)
+            }
+            .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(.horizontal, 7.5)
+        .background {
+            RoundedRectangle(cornerRadius: 7)
+                .fill(theme.background(isDark: isDark).opacity(0.5))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(theme.secondaryCard(isDark: isDark), lineWidth: 1)
+                }
+        }
+#else
+        SwipeView {
+            HStack(spacing: 12) {
+                RoundedRectangleWebImageView(url: URL(string: song.thumbnailURL ?? ""))
+                    .frame(width: 40, height: 40)
+                    .skeleton(active: isLoading)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(song.name ?? "Unknown")
+                        .font(.system(size: 13, weight: .regular, design: .default))
+                        .foregroundStyle(theme.text(isDark: isDark))
+                        .skeleton(active: isLoading)
+                    Text(song.artists?.all?.compactMap { $0.name }.joined(separator: ", ") ?? "Unknown")
+                        .font(.system(size: 11, weight: .light, design: .default))
+                        .foregroundStyle(theme.subText(isDark: isDark))
+                        .skeleton(active: isLoading)
+                }
+                .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.horizontal, 7.5)
+            .background {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(theme.background(isDark: isDark).opacity(0.5))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(theme.secondaryCard(isDark: isDark), lineWidth: 1)
+                    }
+            }
+        } trailingActions: { context in
+            SwipeAction {
+                print("Like")
+                context.state.wrappedValue = .closed
+            } label: { _ in
+                Image(systemName: "heart")
+                    .font(.system(size: 25, weight: .light, design: .default))
+                    .foregroundStyle(Color.pink)
+            } background: { _ in
+                Capsule()
+                    .fill(theme.secondaryCard(isDark: isDark))
+                    .overlay {
+                        Capsule()
+                            .stroke(theme.secondaryCard(isDark: isDark), lineWidth: 1)
+                    }
+            }
+        }
+        .swipeMinimumDistance(25)
+        .swipeActionsStyle(.mask)
+        .swipeEnabled(true )
+#endif
+    }
+}
+
+
+private func defaultMyPlaylistObject() -> MyPlaylistRealmModel {
+    let myPlaylist = MyPlaylistRealmModel()
+    myPlaylist.name = "Default"
+    myPlaylist.desc = "Default Playlist"
+    return myPlaylist
+}
