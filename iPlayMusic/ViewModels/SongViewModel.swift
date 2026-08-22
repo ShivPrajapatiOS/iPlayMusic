@@ -11,7 +11,6 @@ import Combine
 class SongViewModel: BaseViewModel {
     
     @Published var songs: [SongModel] = []
-    @Published var suggestionSongs: [SongModel] = []
     @Published var txtSearchSong: String = ""
 
     @Published var isSearching: Bool = false
@@ -85,14 +84,6 @@ class SongViewModel: BaseViewModel {
             try await self.service.getSong(id: id)
         } onSuccess: { result in
             print(result)
-        }
-    }
-    
-    func getSuggestion(songId: String) async {
-        await execute {
-            try await self.service.getSuggestionSongs(songId: songId, page: 0, limit: pageLimit)
-        } onSuccess: { result in
-            self.suggestionSongs = result
         }
     }
 }

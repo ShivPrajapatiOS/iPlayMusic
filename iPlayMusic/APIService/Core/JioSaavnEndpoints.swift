@@ -96,7 +96,7 @@ extension JioSaavnEndpoint {
         case .songsSuggestions(id: let songId, let page, let limit):
             return APIEndpoint(
                 baseURL: JioSaavnConfig.baseURL,
-                path: "api/songs/\(songId)/suggestions",
+                path: "/api/songs/\(songId)/suggestions",
                 queryParameters: ["page": "\(page)", "limit": "\(limit)"]
             )
             

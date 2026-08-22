@@ -13,6 +13,7 @@ struct SongsView: View {
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmSong: SongViewModel = .init()
+    @StateObject private var vmSuggestionSong: SongSuggestionViewModel = .init()
     @StateObject private var vmSongRealm: SongRealmViewModel = .init()
 
     var isDark: Bool {
@@ -49,6 +50,11 @@ struct SongsView: View {
                                 .onAppear {
                                     if index == vmSong.songs.count - 3 {
                                         Task { await vmSong.loadMoreSongs() }
+                                    }
+                                }
+                                .onTapGesture {
+                                    Task {
+                                        await vmSuggestionSong.getSuggestion(songId: song.id)
                                     }
                                 }
                         }
