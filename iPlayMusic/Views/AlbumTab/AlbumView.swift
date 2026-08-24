@@ -10,6 +10,7 @@ import SkeletonUI
 
 struct AlbumView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmAlbum: AlbumViewModel = .init()
@@ -34,25 +35,66 @@ struct AlbumView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVGrid(columns: gridColumns, spacing: 20) {
-                    ForEach(Array(vmAlbum.albums.enumerated()), id: \.element.id) { index, album in
-                        NavigationLink {
-                            AlbumDetailsView(vmAlbum: vmAlbum, album: album)
-                        } label: {
-                            AlbumItemView(album: album, isLoading: $vmAlbum.isLoading)
-                                .onAppear {
-                                    if index == vmAlbum.albums.count - 3 {
-                                        Task { await vmAlbum.loadMoreAlbums() }
+            ZStack {
+                if ((!vmAlbum.albums.isEmpty) || (!vmNewRelease.newAlbums.isEmpty)) {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            if vmAlbum.albums.isEmpty {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmNewRelease.newAlbums.enumerated()), id: \.element.id) { index, newAlbum in
+                                        NavigationLink {
+                                            AlbumDetailsView(vmAlbum: vmAlbum, album: newAlbum)
+                                        } label: {
+                                            AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
+                            } else {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmAlbum.albums.enumerated()), id: \.element.id) { index, album in
+                                        NavigationLink {
+                                            AlbumDetailsView(vmAlbum: vmAlbum, album: album)
+                                        } label: {
+                                            AlbumItemView(album: album, isLoading: $vmAlbum.isLoading)
+                                                .onAppear {
+                                                    if index == vmAlbum.albums.count - 3 {
+                                                        Task { await vmAlbum.loadMoreAlbums() }
+                                                    }
+                                                }
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.bottom)
+                    }
+                } else {
+                    VStack {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 55, weight: .light))
+                            .foregroundStyle(theme.subText(isDark: isDark))
+                            .frame(width: 100, height: 100)
+                            .background {
+                                Circle()
+                                    .fill(theme.secondaryCard(isDark: isDark))
+                            }
+                        
+                        VStack(spacing: 6) {
+                            Text("No Album Found")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(theme.text(isDark: isDark))
+                            
+                            Text("Search for a album to start listening.")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundStyle(theme.subText(isDark: isDark))
+                                .multilineTextAlignment(.center)
+                        }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
-            }
+        }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.albums] ?? "") { _, newValue in
                 guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
@@ -164,4 +206,5 @@ struct AlbumItemView: View {
 
 #Preview {
     AlbumView()
+        .environmentObject(NewReleaseViewModel())
 }

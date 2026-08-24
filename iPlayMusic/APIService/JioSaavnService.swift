@@ -15,11 +15,13 @@ protocol JioSaavnServiceProtocol {
     
     // Songs
     func getSong(id: String) async throws -> [SongModel]
+    func getSong(link: String) async throws -> [SongModel]
     func getSongs(ids: [String]) async throws -> [SongModel]
     func getSuggestionSongs(songId: String, page: Int, limit: Int) async throws -> [SongModel]
     
     // Albums
     func getAlbum(id: String) async throws -> AlbumDetailsModel
+    func getAlbum(link: String) async throws -> AlbumDetailsModel
     
     // Artists
     func getArtist(id: String) async throws -> ArtistDetailsModel
@@ -28,6 +30,7 @@ protocol JioSaavnServiceProtocol {
     
     // Playlists
     func getPlaylist(id: String) async throws -> PlaylistDetailsModel
+    func getPlaylist(link: String) async throws -> PlaylistDetailsModel
 }
 
 // MARK: - Extension protocol 
@@ -100,6 +103,12 @@ final class JioSaavnService: JioSaavnServiceProtocol {
         return try unwrap(response.data, fallback: "Song not found")
     }
     
+    func getSong(link: String) async throws -> [SongModel] {
+        let endpoint = JioSaavnEndpoint.songByLink(link: link).endpoint
+        let response = try await client.get(endpoint, responseType: APIResponse<[SongModel]>.self)
+        return try unwrap(response.data, fallback: "Song not found")
+    }
+    
     func getSongs(ids: [String]) async throws -> [SongModel] {
         let endpoint = JioSaavnEndpoint.songsByIds(ids: ids).endpoint
         let response = try await client.get(endpoint, responseType: APIResponse<[SongModel]>.self)
@@ -116,6 +125,12 @@ final class JioSaavnService: JioSaavnServiceProtocol {
     
     func getAlbum(id: String) async throws -> AlbumDetailsModel {
         let endpoint = JioSaavnEndpoint.albumById(id: id).endpoint
+        let response = try await client.get(endpoint, responseType: APIResponse<AlbumDetailsModel>.self)
+        return try unwrap(response.data, fallback: "Album not found")
+    }
+    
+    func getAlbum(link: String) async throws -> AlbumDetailsModel {
+        let endpoint = JioSaavnEndpoint.albumByLink(link: link).endpoint
         let response = try await client.get(endpoint, responseType: APIResponse<AlbumDetailsModel>.self)
         return try unwrap(response.data, fallback: "Album not found")
     }
@@ -144,6 +159,12 @@ final class JioSaavnService: JioSaavnServiceProtocol {
     
     func getPlaylist(id: String) async throws -> PlaylistDetailsModel {
         let endpoint = JioSaavnEndpoint.playlistById(id: id).endpoint
+        let response = try await client.get(endpoint, responseType: APIResponse<PlaylistDetailsModel>.self)
+        return try unwrap(response.data, fallback: "Playlist not found")
+    }
+    
+    func getPlaylist(link: String) async throws -> PlaylistDetailsModel {
+        let endpoint = JioSaavnEndpoint.playlistByLink(link: link).endpoint
         let response = try await client.get(endpoint, responseType: APIResponse<PlaylistDetailsModel>.self)
         return try unwrap(response.data, fallback: "Playlist not found")
     }

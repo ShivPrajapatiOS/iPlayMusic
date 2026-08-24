@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var networkManager: NetworkManager = .init()
     @StateObject private var appState: StateManager = .shared
     @StateObject var syncManager: SyncService = .init()
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .init()
     
     var isDark: Bool {
         if theme.themeMode == .system {
@@ -89,10 +90,13 @@ struct ContentView: View {
                                 ArtistView()
                             case .albums:
                                 AlbumView()
+                                    .environmentObject(vmNewRelease)
                             case .songs:
                                 SongsView()
+                                    .environmentObject(vmNewRelease)
                             case .playlists:
                                 PlaylistView()
+                                    .environmentObject(vmNewRelease)
                             case .myPlaylists:
                                 MyPlaylistsView()
                             }
@@ -129,6 +133,9 @@ struct ContentView: View {
                        value: appState.showFullPlayer)
             .sheet(isPresented: $showCreatePlaylist) {
                 CreatePlaylistView(vmMyPlaylist: .init(), showCreatePlaylist: $showCreatePlaylist)
+            }
+            .task {
+                vmNewRelease.startLoading()
             }
             .onFirstAppear {
                 Task {

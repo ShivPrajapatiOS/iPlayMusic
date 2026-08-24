@@ -10,6 +10,7 @@ import SkeletonUI
 
 struct SongsView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmSong: SongViewModel = .init()
@@ -42,38 +43,78 @@ struct SongsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
             ZStack {
-                ScrollView(.vertical) {
-                    LazyVStack {
-                        ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
-                            SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
-                                .frame(height: 55)
-                                .onAppear {
-                                    if index == vmSong.songs.count - 3 {
-                                        Task { await vmSong.loadMoreSongs() }
+                if ((!vmSong.songs.isEmpty) || (!vmNewRelease.newSongs.isEmpty)) {
+                    ScrollView(.vertical) {
+                        LazyVStack(spacing: 0) {
+                            if vmSong.songs.isEmpty {
+                                LazyVStack {
+                                    Text("New Release")
+                                        .font(.system(size: 15, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
+                                        SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
+                                            .frame(height: 55)
+                                            .onTapGesture {
+                                                Task {
+                                                    await vmSuggestionSong.getSuggestion(songId: newSong.id)
+                                                }
+                                            }
                                     }
                                 }
-                                .onTapGesture {
-                                    Task {
-                                        await vmSuggestionSong.getSuggestion(songId: song.id)
+                            } else {
+                                LazyVStack {
+                                    ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
+                                        SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
+                                            .frame(height: 55)
+                                            .onAppear {
+                                                if index == vmSong.songs.count - 3 {
+                                                    Task { await vmSong.loadMoreSongs() }
+                                                }
+                                            }
+                                            .onTapGesture {
+                                                Task {
+                                                    await vmSuggestionSong.getSuggestion(songId: song.id)
+                                                }
+                                            }
+                                    }
+                                    if vmSong.isLoadingMore {
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 12)
                                     }
                                 }
+                            }
                         }
-                        if vmSong.isLoadingMore {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
+                        .padding(.bottom)
+                        .padding(.horizontal)
+                    }
+                } else {
+                    VStack {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 55, weight: .light))
+                            .foregroundStyle(theme.subText(isDark: isDark))
+                            .frame(width: 100, height: 100)
+                            .background {
+                                Circle()
+                                    .fill(theme.secondaryCard(isDark: isDark))
+                            }
+                        
+                        VStack(spacing: 6) {
+                            Text("No Songs Found")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(theme.text(isDark: isDark))
+                            
+                            Text("Search for a song to start listening.")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundStyle(theme.subText(isDark: isDark))
+                                .multilineTextAlignment(.center)
                         }
                     }
-                    .padding(.bottom)
-                    .padding(.horizontal)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onAppear(perform: {
-                Task {
-                    await vmSong.getSong(id: "K7pHpFNL")
-                }
-            })
             .onChange(of: appState.searchTextByTab[.songs] ?? "") { _, newValue in
                 guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 Task {

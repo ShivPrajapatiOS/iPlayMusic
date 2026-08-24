@@ -4,13 +4,11 @@
 import Foundation
 
 // MARK: - Base Configuration
-
 enum JioSaavnConfig {
     static let baseURL = "https://jiosaavn-api-lovat.vercel.app"
 }
 
 // MARK: - JioSaavn Endpoints
-
 enum JioSaavnEndpoint {
     
     // MARK: - Search
@@ -22,11 +20,13 @@ enum JioSaavnEndpoint {
     
     // MARK: - Songs
     case songById(id: String)
+    case songByLink(link: String)
     case songsByIds(ids: [String])
     case songsSuggestions(id: String, page: Int = 0, limit: Int = 10)
     
     // MARK: - Albums
     case albumById(id: String)
+    case albumByLink(link: String)
     
     // MARK: - Artists
     case artistById(id: String)
@@ -35,10 +35,10 @@ enum JioSaavnEndpoint {
     
     // MARK: - Playlists
     case playlistById(id: String)
+    case playlistByLink(link: String)
 }
 
 // MARK: - Endpoint Builder
-
 extension JioSaavnEndpoint {
     
     var endpoint: APIEndpoint {
@@ -83,16 +83,23 @@ extension JioSaavnEndpoint {
         case .songById(let id):
             return APIEndpoint(
                 baseURL: JioSaavnConfig.baseURL,
-                path: "/api/songs/\(id)"
+                path: "/api/songs/\(id)",
+            )
+            
+        case .songByLink(link: let link):
+            return APIEndpoint(
+                baseURL: JioSaavnConfig.baseURL,
+                path: "/api/songs",
+                queryParameters: ["link": link]
             )
             
         case .songsByIds(let ids):
             return APIEndpoint(
                 baseURL: JioSaavnConfig.baseURL,
                 path: "/api/songs",
-                queryParameters: ["id": ids.joined(separator: ",")]
+                queryParameters: ["ids": ids.joined(separator: ",")]
             )
-            
+                        
         case .songsSuggestions(id: let songId, let page, let limit):
             return APIEndpoint(
                 baseURL: JioSaavnConfig.baseURL,
@@ -106,6 +113,12 @@ extension JioSaavnEndpoint {
                 baseURL: JioSaavnConfig.baseURL,
                 path: "/api/albums",
                 queryParameters: ["id": id]
+            )
+        case .albumByLink(link: let link):
+            return APIEndpoint(
+                baseURL: JioSaavnConfig.baseURL,
+                path: "/api/albums",
+                queryParameters: ["link": link]
             )
             
         // ── Artists ───────────────────────────────────────────────
@@ -134,8 +147,12 @@ extension JioSaavnEndpoint {
                 path: "/api/playlists",
                 queryParameters: ["id": id]
             )
-        // ── Trending ─────────────────────────────────────────────
-
+        case .playlistByLink(link: let link):
+            return APIEndpoint(
+                baseURL: JioSaavnConfig.baseURL,
+                path: "/api/playlists",
+                queryParameters: ["link": link]
+            )
         }
     }
 }

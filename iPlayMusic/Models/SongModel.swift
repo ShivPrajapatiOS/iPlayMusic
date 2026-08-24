@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+// MARK: - Search Songs Result
+struct SearchSongsResult: Decodable {
+    let total: Int?
+    let start: Int?
+    let results: [SongModel]?
+}
+
 // MARK: - Song Model
 struct SongModel: Decodable, Identifiable {
     let id: String
@@ -56,14 +63,6 @@ struct ImageQuality: Decodable {
     let quality: QualityLevel?
     let url: String?
 }
-
-
-struct SearchSongsResult: Decodable {
-    let total: Int?
-    let start: Int?
-    let results: [SongModel]?
-}
-
 
 struct DownloadUrl: Decodable {
     enum AudioQuality: String, Decodable {

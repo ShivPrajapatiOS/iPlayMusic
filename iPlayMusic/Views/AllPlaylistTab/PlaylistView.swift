@@ -10,6 +10,7 @@ import SkeletonUI
 
 struct PlaylistView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmPlaylist: PlaylistViewModel = .init()
@@ -34,24 +35,65 @@ struct PlaylistView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVGrid(columns: gridColumns, spacing: 20) {
-                    ForEach(Array(vmPlaylist.playlists.enumerated()), id: \.element.id) { index, playlist in
-                        NavigationLink {
-                            PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: playlist)
-                        } label: {
-                            PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading)
-                                .onAppear {
-                                    if index == vmPlaylist.playlists.count - 3 {
-                                        Task { await vmPlaylist.loadMorePlaylists() }
+            ZStack {
+                if ((!vmPlaylist.playlists.isEmpty) || (!vmNewRelease.newPlaylists.isEmpty)) {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            if vmPlaylist.playlists.isEmpty {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmNewRelease.newPlaylists.enumerated()), id: \.element.id) { index, newPlaylist in
+                                        NavigationLink {
+                                            PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: newPlaylist)
+                                        } label: {
+                                            PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
+                            } else {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmPlaylist.playlists.enumerated()), id: \.element.id) { index, playlist in
+                                        NavigationLink {
+                                            PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: playlist)
+                                        } label: {
+                                            PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading)
+                                                .onAppear {
+                                                    if index == vmPlaylist.playlists.count - 3 {
+                                                        Task { await vmPlaylist.loadMorePlaylists() }
+                                                    }
+                                                }
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.bottom)
+                    }
+                } else {
+                    VStack {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 55, weight: .light))
+                            .foregroundStyle(theme.subText(isDark: isDark))
+                            .frame(width: 100, height: 100)
+                            .background {
+                                Circle()
+                                    .fill(theme.secondaryCard(isDark: isDark))
+                            }
+                        
+                        VStack(spacing: 6) {
+                            Text("No Playlist Found")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(theme.text(isDark: isDark))
+                            
+                            Text("Search for a playlist to start listening.")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundStyle(theme.subText(isDark: isDark))
+                                .multilineTextAlignment(.center)
+                        }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.playlists] ?? "") { _, newValue in
@@ -160,6 +202,7 @@ struct PlaylistItemView: View {
 
 #Preview {
     PlaylistView()
+        .environmentObject(NewReleaseViewModel())
 }
 
 
