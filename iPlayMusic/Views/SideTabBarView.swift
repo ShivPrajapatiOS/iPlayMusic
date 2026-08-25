@@ -42,10 +42,10 @@ enum SideTabBar: String, CaseIterable {
 
 struct SideTabBarView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @ObservedObject private var vmAuth: AuthenticationViewModel = .init()
+    @ObservedObject var vmAuth: AuthenticationViewModel
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -101,8 +101,6 @@ struct SideTabBarView: View {
                     .lineLimit(1)
                     Spacer()
                     Button {
-//                        NSApplication.shared.activate(ignoringOtherApps: true)
-//                        WindowManager.shared.openWindow(id: .settings, title: "", view: AnyView(SettingsView()))
                         isShowSettings.toggle()
                     } label: {
                         Image(systemName: "gearshape")
@@ -237,7 +235,7 @@ struct SideTabBarView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .sheet(isPresented: $isShowSettings) {
-            SettingsView()
+            SettingsView(vmAuth: vmAuth)
         }
     }
 }
@@ -284,7 +282,7 @@ struct AppTabView: View {
 
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

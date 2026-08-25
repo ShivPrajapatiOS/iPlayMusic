@@ -15,7 +15,7 @@ struct AlbumView: View {
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmAlbum: AlbumViewModel = .init()
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -72,27 +72,7 @@ struct AlbumView: View {
                         .padding(.bottom)
                     }
                 } else {
-                    VStack {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 55, weight: .light))
-                            .foregroundStyle(theme.subText(isDark: isDark))
-                            .frame(width: 100, height: 100)
-                            .background {
-                                Circle()
-                                    .fill(theme.secondaryCard(isDark: isDark))
-                            }
-                        
-                        VStack(spacing: 6) {
-                            Text("No Album Found")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(theme.text(isDark: isDark))
-                            
-                            Text("Search for a album to start listening.")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(theme.subText(isDark: isDark))
-                                .multilineTextAlignment(.center)
-                        }
-                    }
+                    EmptyDataView(icon: "music.note.square.stack", title: "No Album Found", subTitle: "Search for a album to start listening.")
                 }
         }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -113,7 +93,7 @@ struct AlbumItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

@@ -9,13 +9,14 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @StateObject private var vmAuth: AuthenticationViewModel = .init()
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var networkManager: NetworkManager = .init()
     @StateObject private var appState: StateManager = .shared
-    @StateObject var syncManager: SyncService = .init()
+    @StateObject private var syncManager: SyncService = .init()
     @StateObject private var vmNewRelease: NewReleaseViewModel = .init()
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -74,7 +75,7 @@ struct ContentView: View {
             ZStack {
                 Color.clear.ignoresSafeArea()
                 HStack(spacing: 0) {
-                    SideTabBarView(selectedTab: $selectedTab)
+                    SideTabBarView(vmAuth: vmAuth, selectedTab: $selectedTab)
                         .frame(width: 200)
                     ZStack {
                         Group {
@@ -83,11 +84,13 @@ struct ContentView: View {
                                 SearchView()
                             case .home:
                                 HomeView()
+                                    .environmentObject(vmNewRelease)
                             case .radio:
                                 Text(selectedTab.title)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                             case .artists:
                                 ArtistView()
+                                    .environmentObject(vmNewRelease)
                             case .albums:
                                 AlbumView()
                                     .environmentObject(vmNewRelease)
@@ -129,15 +132,17 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .loadingOverlay($vmNewRelease.isNewLoading)
             .animation(.spring(response: 0.5, dampingFraction: 0.85),
                        value: appState.showFullPlayer)
             .sheet(isPresented: $showCreatePlaylist) {
                 CreatePlaylistView(vmMyPlaylist: .init(), showCreatePlaylist: $showCreatePlaylist)
             }
-            .task {
+            .onChange(of: StateManager.shared.musicLanguage) {
                 vmNewRelease.startLoading()
             }
             .onFirstAppear {
+                vmNewRelease.startLoading()
                 Task {
                     do {
                         if networkManager.isConnected {

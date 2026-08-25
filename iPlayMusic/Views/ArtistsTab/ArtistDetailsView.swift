@@ -16,7 +16,7 @@ struct ArtistDetailsView: View {
     @StateObject private var appState: StateManager = .shared
     
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -29,7 +29,7 @@ struct ArtistDetailsView: View {
     @ObservedObject var vmArtist: ArtistViewModel
     @StateObject private var vmPlaylist: PlaylistViewModel = .init()
     @StateObject private var vmAlbum: AlbumViewModel = .init()
-    @Binding var artist: ArtistModel
+    let artist: ArtistModel
     
     @State private var randomTopSongs: [SongModel] = []
     
@@ -142,6 +142,7 @@ struct ArtistDetailsView: View {
                                                     PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading)
                                                     .frame(width: 150, height: 190)
                                                 }
+                                                .buttonStyle(.plain)
                                             }
                                         }
                                         .padding(.horizontal)
@@ -221,7 +222,7 @@ struct ArtistDetailsView: View {
 }
 
 #Preview {
-    ArtistDetailsView(vmArtist: .init(), artist: .constant(artist1))
+    ArtistDetailsView(vmArtist: .init(), artist: artist1)
 }
 
 let artist1 = ArtistModel(

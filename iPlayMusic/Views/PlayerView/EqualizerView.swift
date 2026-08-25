@@ -12,7 +12,7 @@ struct EqualizerView: View {
 
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

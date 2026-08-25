@@ -9,9 +9,10 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @StateObject private var theme: ThemeManager = .shared
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -73,8 +74,90 @@ struct HomeView: View {
             }
 #else
             ZStack {
-                Text("Home")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(spacing: 15) {
+                        if !vmNewRelease.newSongs.isEmpty {
+                            VStack {
+                                Text("New Release Music 👇")
+                                    .font(.system(size: 15, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .frame(height: 45)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
+                                    SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { _, _ in })
+                                        .frame(height: 55)
+                                        .onTapGesture {
+//                                            Task {
+//                                                await vmSuggestionSong.getSuggestion(songId: newSong.id)
+//                                            }
+                                        }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        if !vmNewRelease.newAlbums.isEmpty {
+                            VStack {
+                                Text("New Albums 💿")
+                                    .font(.system(size: 15, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .frame(height: 45)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(vmNewRelease.newAlbums, id: \.id) { newAlbum in
+                                            AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
+                                                .frame(width: 150, height: 190)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                        
+                        if !vmNewRelease.newPlaylists.isEmpty {
+                            VStack {
+                                Text("New Playlist 🎶")
+                                    .font(.system(size: 15, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .frame(height: 45)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(vmNewRelease.newPlaylists, id: \.id) { newPlaylist in
+                                            PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
+                                                .frame(width: 150, height: 190)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                        
+                        if !vmNewRelease.newArtists.isEmpty {
+                            VStack {
+                                Text("Tranding Artist 🎙️")
+                                    .font(.system(size: 15, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .frame(height: 45)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(vmNewRelease.newArtists, id: \.id) { newArtist in
+                                            ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
+                                                .frame(width: 150, height: 190)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .top) {
@@ -146,5 +229,6 @@ struct HomeView_Preview: View {
     HomeView_Preview()
 #else
     HomeView()
+        .environmentObject(NewReleaseViewModel())
 #endif
 }

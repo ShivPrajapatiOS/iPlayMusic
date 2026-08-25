@@ -18,7 +18,7 @@ struct ImageView: View {
 
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -58,7 +58,7 @@ struct RoundedRectangleWebImageView: View {
     @StateObject private var theme: ThemeManager = .shared
     @State private var didLoad = false
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -114,7 +114,7 @@ struct RoundedRectangleDataImageView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
  
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -183,7 +183,7 @@ struct CircleWebImageView: View {
     @StateObject private var theme: ThemeManager = .shared
     @State private var didLoad = false
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

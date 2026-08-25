@@ -17,7 +17,7 @@ struct PlaylistDetailsView: View {
     @StateObject private var appState: StateManager = .shared
     
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -143,7 +143,7 @@ struct MyPlaylistDetailsView: View {
     @StateObject private var network: NetworkManager = .init()
     
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -320,7 +320,7 @@ struct MySongItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

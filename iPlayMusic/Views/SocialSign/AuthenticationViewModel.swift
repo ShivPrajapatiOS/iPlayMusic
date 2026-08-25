@@ -305,9 +305,6 @@ class AuthenticationViewModel: NSObject, ObservableObject {
             appState.isLoggedIn = false
             self.appState.isAnonymous = false
             appState.uid.removeAll()
-#if os(macOS)
-            WindowManager.shared.closeWindow(id: .settings)
-#endif
         } catch {
             print(error.localizedDescription)
         }

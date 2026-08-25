@@ -14,7 +14,7 @@ struct SearchView: View {
     @StateObject private var vmAuth: AuthenticationViewModel = .init()
     @StateObject private var vmSearch: SearchViewModel = .init()
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -272,7 +272,7 @@ struct SongSearchItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

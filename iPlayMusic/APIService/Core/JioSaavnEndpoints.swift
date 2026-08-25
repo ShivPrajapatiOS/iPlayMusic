@@ -30,6 +30,7 @@ enum JioSaavnEndpoint {
     
     // MARK: - Artists
     case artistById(id: String)
+    case artistByLink(link: String)
     case artistSongs(artistId: String)
     case artistAlbums(artistId: String)
     
@@ -126,6 +127,13 @@ extension JioSaavnEndpoint {
             return APIEndpoint(
                 baseURL: JioSaavnConfig.baseURL,
                 path: "/api/artists/\(id)"
+            )
+            
+        case .artistByLink(let link):
+            return APIEndpoint(
+                baseURL: JioSaavnConfig.baseURL,
+                path: "/api/artists",
+                queryParameters: ["link": link]
             )
             
         case .artistSongs(let artistId):

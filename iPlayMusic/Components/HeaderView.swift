@@ -12,7 +12,7 @@ struct HeaderView: View {
     
     @StateObject private var theme: ThemeManager = .shared
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -129,7 +129,7 @@ struct BackButtonHeaderView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -246,7 +246,7 @@ struct HeaderDetailsView: View {
     var scrollProgress: CGFloat // Progress: 0.0 -> 1.0
     var backAction: (() -> Void)? = nil
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

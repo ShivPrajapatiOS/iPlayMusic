@@ -13,7 +13,7 @@ struct MusicPlayerView: View {
     @EnvironmentObject var appState: StateManager
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

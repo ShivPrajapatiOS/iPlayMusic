@@ -14,7 +14,7 @@ struct ProfileView: View {
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var vmAuth: AuthenticationViewModel = .init()
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

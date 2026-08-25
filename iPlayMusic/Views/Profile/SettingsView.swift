@@ -63,10 +63,11 @@ enum SupportType: String, CaseIterable {
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var systemScheme
-    @StateObject private var theme: ThemeManager = .shared
-    @StateObject private var vmAuth: AuthenticationViewModel = .init()
+    @ObservedObject var vmAuth: AuthenticationViewModel
 
-    var isDark: Bool {
+    @StateObject private var theme: ThemeManager = .shared
+
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -228,7 +229,7 @@ struct AccountTabView: View {
     @StateObject private var appState: StateManager = .shared
     @ObservedObject var vmAuth: AuthenticationViewModel
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -446,7 +447,7 @@ struct SupportTabView: View {
 
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -509,6 +510,6 @@ struct SupportTabView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(vmAuth: .init())
 }
 #endif

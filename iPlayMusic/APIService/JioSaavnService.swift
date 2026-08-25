@@ -25,6 +25,7 @@ protocol JioSaavnServiceProtocol {
     
     // Artists
     func getArtist(id: String) async throws -> ArtistDetailsModel
+    func getArtist(link: String) async throws -> ArtistDetailsModel
     func getArtistSongs(artistId: String) async throws -> ArtistSongsResponse
     func getArtistAlbums(artistId: String) async throws -> ArtistAlbumsResponse
     
@@ -139,6 +140,12 @@ final class JioSaavnService: JioSaavnServiceProtocol {
     
     func getArtist(id: String) async throws -> ArtistDetailsModel {
         let endpoint = JioSaavnEndpoint.artistById(id: id).endpoint
+        let response = try await client.get(endpoint, responseType: APIResponse<ArtistDetailsModel>.self)
+        return try unwrap(response.data, fallback: "Artist not found")
+    }
+    
+    func getArtist(link: String) async throws -> ArtistDetailsModel {
+        let endpoint = JioSaavnEndpoint.artistByLink(link: link).endpoint
         let response = try await client.get(endpoint, responseType: APIResponse<ArtistDetailsModel>.self)
         return try unwrap(response.data, fallback: "Artist not found")
     }

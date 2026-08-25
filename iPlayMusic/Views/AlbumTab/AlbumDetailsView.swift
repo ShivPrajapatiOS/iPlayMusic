@@ -15,7 +15,7 @@ struct AlbumDetailsView: View {
     @StateObject private var appState: StateManager = .shared
     
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

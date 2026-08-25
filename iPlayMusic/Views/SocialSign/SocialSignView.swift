@@ -13,7 +13,7 @@ struct SocialSignView: View {
     @EnvironmentObject var vmAuth: AuthenticationViewModel
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -355,6 +355,7 @@ struct SocialSignView: View {
             .frame(maxWidth: 975, maxHeight: 575)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .loadingOverlay($vmAuth.isLoading)
 #endif
     }
 }

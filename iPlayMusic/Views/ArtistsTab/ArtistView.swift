@@ -10,11 +10,12 @@ import SkeletonUI
 
 struct ArtistView: View {
     @Environment(\.colorScheme) private var systemScheme
+    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmArtist: ArtistViewModel = .init()
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -34,24 +35,46 @@ struct ArtistView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVGrid(columns: gridColumns, spacing: 20) {
-                    ForEach(Array(vmArtist.artists.enumerated()), id: \.element.id) { index, artist in
-                        NavigationLink {
-                            ArtistDetailsView(vmArtist: vmArtist, artist: .constant(artist))
-                        } label: {
-                            ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading)
-                                .onAppear {
-                                    if index == vmArtist.artists.count - 3 {
-                                        Task { await vmArtist.loadMoreArtists() }
+            ZStack {
+                if ((!vmArtist.artists.isEmpty) || (!vmNewRelease.newArtists.isEmpty)) {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            if vmArtist.artists.isEmpty {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmNewRelease.newArtists.enumerated()), id: \.element.id) { index, newArtist in
+                                        NavigationLink {
+                                            ArtistDetailsView(vmArtist: vmArtist, artist: newArtist)
+                                        } label: {
+                                            ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
+                            } else {
+                                LazyVGrid(columns: gridColumns, spacing: 20) {
+                                    ForEach(Array(vmArtist.artists.enumerated()), id: \.element.id) { index, artist in
+                                        NavigationLink {
+                                            ArtistDetailsView(vmArtist: vmArtist, artist: artist)
+                                        } label: {
+                                            ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading)
+                                                .onAppear {
+                                                    if index == vmArtist.artists.count - 3 {
+                                                        Task { await vmArtist.loadMoreArtists() }
+                                                    }
+                                                }
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.bottom)
                     }
+                } else {
+                    EmptyDataView(icon: "music.microphone", title: "No Artist Found", subTitle: "Search for a artists to start listening.")
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.artists] ?? "") { _, newValue in
@@ -71,7 +94,7 @@ struct ArtistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -161,4 +184,5 @@ struct ArtistItemView: View {
 
 #Preview {
     ArtistView()
+        .environmentObject(NewReleaseViewModel())
 }

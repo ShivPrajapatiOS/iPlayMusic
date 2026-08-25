@@ -17,7 +17,7 @@ struct SongsView: View {
     @StateObject private var vmSuggestionSong: SongSuggestionViewModel = .init()
     @StateObject private var vmSongRealm: SongRealmViewModel = .init()
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -48,11 +48,6 @@ struct SongsView: View {
                         LazyVStack(spacing: 0) {
                             if vmSong.songs.isEmpty {
                                 LazyVStack {
-                                    Text("New Release")
-                                        .font(.system(size: 15, weight: .semibold, design: .default))
-                                        .foregroundStyle(theme.subText(isDark: isDark))
-                                        .frame(height: 45)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
                                         SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
                                             .frame(height: 55)
@@ -91,27 +86,7 @@ struct SongsView: View {
                         .padding(.horizontal)
                     }
                 } else {
-                    VStack {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 55, weight: .light))
-                            .foregroundStyle(theme.subText(isDark: isDark))
-                            .frame(width: 100, height: 100)
-                            .background {
-                                Circle()
-                                    .fill(theme.secondaryCard(isDark: isDark))
-                            }
-                        
-                        VStack(spacing: 6) {
-                            Text("No Songs Found")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(theme.text(isDark: isDark))
-                            
-                            Text("Search for a song to start listening.")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(theme.subText(isDark: isDark))
-                                .multilineTextAlignment(.center)
-                        }
-                    }
+                    EmptyDataView(icon: "music.note.slash", title: "No Songs Found", subTitle: "Search for a song to start listening.")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -150,7 +125,7 @@ struct SongItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

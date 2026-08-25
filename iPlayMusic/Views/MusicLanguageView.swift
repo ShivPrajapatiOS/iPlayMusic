@@ -81,7 +81,7 @@ struct MusicLanguageView: View {
     
     @State private var selectedMusicLanguage: Set<MusicLanguage> = []
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -231,7 +231,7 @@ struct DropDownMusicLanguageView: View {
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

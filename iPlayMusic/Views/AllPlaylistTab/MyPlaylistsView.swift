@@ -16,7 +16,7 @@ struct MyPlaylistsView: View {
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmMyPlaylist: MyPlaylistRealmViewModel = .init()
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -65,7 +65,7 @@ struct MyPlaylistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

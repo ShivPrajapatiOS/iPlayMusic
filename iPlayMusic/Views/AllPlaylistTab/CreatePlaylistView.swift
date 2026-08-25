@@ -25,7 +25,7 @@ struct CreatePlaylistView: View {
     @StateObject private var appState: StateManager = .shared
     @ObservedObject var vmMyPlaylist: MyPlaylistRealmViewModel
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }

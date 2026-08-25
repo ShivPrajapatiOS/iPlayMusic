@@ -15,7 +15,7 @@ struct PlaylistView: View {
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmPlaylist: PlaylistViewModel = .init()
     
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -72,27 +72,7 @@ struct PlaylistView: View {
                         .padding(.bottom)
                     }
                 } else {
-                    VStack {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 55, weight: .light))
-                            .foregroundStyle(theme.subText(isDark: isDark))
-                            .frame(width: 100, height: 100)
-                            .background {
-                                Circle()
-                                    .fill(theme.secondaryCard(isDark: isDark))
-                            }
-                        
-                        VStack(spacing: 6) {
-                            Text("No Playlist Found")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(theme.text(isDark: isDark))
-                            
-                            Text("Search for a playlist to start listening.")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(theme.subText(isDark: isDark))
-                                .multilineTextAlignment(.center)
-                        }
-                    }
+                    EmptyDataView(icon: "music.note.list", title: "No Playlist Found", subTitle: "Search for a playlist to start listening.")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -113,7 +93,7 @@ struct PlaylistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
 
-    var isDark: Bool {
+    private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
         }
@@ -123,6 +103,11 @@ struct PlaylistItemView: View {
     let playlist: PlaylistModel
     @Binding var isLoading: Bool
     @State private var isHover: Bool = false
+
+    // Exact fractions measured from JioSaavn's CDN watermark position
+    private let iconXFraction: CGFloat = 0.049
+    private let iconYFraction: CGFloat = 0.052
+    private let iconSizeFraction: CGFloat = 0.079
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -131,6 +116,17 @@ struct PlaylistItemView: View {
             .aspectRatio(1, contentMode: .fit)
             .skeleton(active: isLoading)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay {
+                GeometryReader { proxy in
+                    let side = proxy.size.width
+                    Image("ic_splash")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 20, height: 20)
+                        .background(Circle().fill(Color("#000000")))
+                        .position(x: (side * iconXFraction) + (side * iconSizeFraction / 2), y: (side * iconYFraction) + (side * iconSizeFraction / 2))
+                }
+            }
             .overlay(alignment: .bottom) {
                 if isHover {
                     HStack {
