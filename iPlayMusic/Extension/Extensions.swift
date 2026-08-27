@@ -17,6 +17,16 @@ import UniformTypeIdentifiers
 import CryptoKit
 
 
+// MARK: - Dictionary Extension
+extension Dictionary where Key == String, Value == Any {
+
+    func decode<T: Decodable>(_ type: T.Type) throws -> T {
+        let data = try JSONSerialization.data(withJSONObject: self)
+
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+}
+
 // MARK: - Date Extension
 extension Date {
     var toStringShortMonth: String {

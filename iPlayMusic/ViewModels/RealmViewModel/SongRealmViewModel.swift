@@ -28,6 +28,44 @@ class SongRealmViewModel: ObservableObject {
         }
     }
     
+    func toggleLike(song: SongModel) async throws -> SongRealmModel {
+            guard let realm = self.realm else { throw RealmError.realmAccessFailed }
+            
+            // MARK: Case 1 — Song already Realm me hai → sirf flag toggle
+            if let existing = realm.objects(SongRealmModel.self).filter("song_id == %@", song.id).first {
+                do {
+                    try realm.write {
+                        existing.isLike.toggle()
+                        existing.isSync = false
+                        existing.updateAt = Date()
+                    }
+                    return existing.freeze()
+                } catch {
+                    throw RealmError.writeFailed(error.localizedDescription)
+                }
+            }
+            
+            // MARK: Case 2 — Naya song, pehli baar like ho raha hai
+            let newSong = mapToRealmSong(from: song)
+            newSong.isLike = true
+            newSong.isSync = false
+            
+            do {
+                try realm.write {
+                    realm.add(newSong)
+                }
+                return newSong.freeze()
+            } catch {
+                throw RealmError.writeFailed(error.localizedDescription)
+            }
+        }
+        
+        /// Kya diya gaya song currently liked hai — heart icon ka initial state set karne ke liye.
+        func isSongLiked(songId: String) -> Bool {
+            guard let realm = self.realm else { return false }
+            return realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first?.isLike ?? false
+        }
+    
     func favoriteSong(song: SongModel) async throws -> SongRealmModel {
         guard let realm = self.realm else { throw RealmError.realmAccessFailed }
         let favoriteSong = mapToRealmSong(from: song)

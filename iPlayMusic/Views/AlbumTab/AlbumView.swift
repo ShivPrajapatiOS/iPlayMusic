@@ -160,14 +160,19 @@ struct AlbumItemView: View {
             }
             
             // MARK: - Album Details
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(album.name ?? "Unknown Album")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(theme.text(isDark: isDark))
                     .lineLimit(1)
                     .skeleton(active: isLoading)
-                
-                Text("Type: \(album.type ?? "Unknown")")
+                HStack {
+                    if let sognCount = album.songCount {
+                        Text("\(sognCount) Songs • ")
+                    }
+                    Text("Type: \(album.type ?? "Unknown")")
+                    Spacer()
+                }
                     .font(.system(size: 11, weight: .regular))
                     .foregroundStyle(theme.subText(isDark: isDark))
                     .lineLimit(1)

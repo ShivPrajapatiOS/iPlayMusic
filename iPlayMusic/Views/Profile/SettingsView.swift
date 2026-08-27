@@ -13,11 +13,10 @@ import FirebaseCore
 import Firebase
 
 enum SettingTabType: String, CaseIterable {
-    case general, account, playback, support
+    case general, account, support
     
     var title: String {
         switch self {
-        case .playback: return "Playback"
         case .general: return "General"
         case .account: return "Account"
         case .support: return "Support"
@@ -26,7 +25,6 @@ enum SettingTabType: String, CaseIterable {
     
     var icon: String {
         switch self {
-        case .playback: return "play.square"
         case .general: return "gearshape"
         case .account: return "person.circle"
         case .support: return "text.document"
@@ -128,8 +126,6 @@ struct SettingsView: View {
                         Text("General")
                     case .account:
                         AccountTabView(vmAuth: vmAuth)
-                    case .playback:
-                        Text("Playback")
                     case .support:
                         SupportTabView(shareView: $shareView) { supportTabsAction($0) }
                     }
@@ -244,7 +240,7 @@ struct AccountTabView: View {
         ZStack {
             VStack {
                 Group {
-                    if appState.isLoggedIn && (currentUser?.isAnonymous == false) {
+                    if appState.isLoggedIn && (appState.isAnonymous == false) {
                         VStack {
                             WebImage(url: currentUser?.providerData.first(where: { $0.photoURL != nil })?.photoURL) { image in
                                 image
@@ -270,28 +266,33 @@ struct AccountTabView: View {
                             }
                             
                             VStack(spacing: 0) {
-                                HStack {
-                                    Image(systemName: "crown")
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 12, height: 12)
-                                        .foregroundStyle(theme.theme.primary)
-                                    Text("Premium")
-                                        .font(.system(size: 10, weight: .medium, design: .default))
-                                        .foregroundStyle(theme.text(isDark: isDark))
-                                    Spacer(minLength: 10)
-                                    Image(systemName: "chevron.forward")
-                                        .font(.system(size: 8, weight: .bold, design: .default))
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .frame(height: 35)
-                                .background(content: {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(theme.secondaryCard(isDark: isDark))
-                                })
-                                .overlay(alignment: .bottom) {
-                                    theme.subText(isDark: isDark).opacity(0.1)
-                                        .frame(height: 1)
+                                if !appState.hasPurchased {
+                                    HStack {
+                                        Image(systemName: "crown")
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 12, height: 12)
+                                            .foregroundStyle(theme.theme.primary)
+                                        Text("Premium")
+                                            .font(.system(size: 10, weight: .medium, design: .default))
+                                            .foregroundStyle(theme.text(isDark: isDark))
+                                        Spacer(minLength: 10)
+                                        Image(systemName: "chevron.forward")
+                                            .font(.system(size: 8, weight: .bold, design: .default))
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(height: 35)
+                                    .background(content: {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(theme.secondaryCard(isDark: isDark))
+                                    })
+                                    .overlay(alignment: .bottom) {
+                                        theme.subText(isDark: isDark).opacity(0.1)
+                                            .frame(height: 1)
+                                    }
+                                    .onTapGesture {
+                                        appState.isShowPurchase = true
+                                    }
                                 }
                                 HStack {
                                     Image(systemName: "power")

@@ -85,6 +85,7 @@ class SongRealmModel: Object, ObjectKeyIdentifiable {
     @Persisted var createAt: Date = Date()
     @Persisted var updateAt: Date = Date()
     @Persisted var isDownloaded: Bool = false
+    @Persisted var isLike: Bool = false
     @Persisted var localAudioFileName: String? = nil
     
     func toJSON() -> [String: Any] {
@@ -106,7 +107,7 @@ class SongRealmModel: Object, ObjectKeyIdentifiable {
             "url": url ?? NSNull(),
             "copyright": copyright ?? NSNull(),
             "image": image?.toJSON() ?? NSNull(),
-            "downloadURL": downloadURL.map { $0.toJSON() },
+            "downloadURL": Array(downloadURL.map { $0.toJSON() }),
             "album": album?.toJSON() ?? NSNull(),
             "artists": artists?.toJSON() ?? NSNull(),
             "createAt": createAt.timeIntervalSince1970,
@@ -114,7 +115,28 @@ class SongRealmModel: Object, ObjectKeyIdentifiable {
             "isSync": true,
             "isDeleted": isDeleted,
             "isDownloaded": isDownloaded,
+            "isLike": isLike,
         ]
+    }
+    
+    func toSongModel() throws -> SongModel {
+        
+        var json = self.toJSON()
+        
+        // Realm → SongModel
+        json["id"] = json["song_id"]
+        json.removeValue(forKey: "song_id")
+        
+        json["downloadUrl"] = json["downloadURL"]
+        json.removeValue(forKey: "downloadURL")
+        
+        // Realm me image single object hai,
+        // SongModel me image array hai
+        if let image = json["image"] as? [String: Any] {
+            json["image"] = [image]
+        }
+        
+        return try json.decode(SongModel.self)
     }
 }
 
@@ -126,7 +148,7 @@ class ImageQualityRealmModel: Object, ObjectKeyIdentifiable {
     func toJSON() -> [String: Any] {
         return [
             "url": url ?? NSNull(),
-            "quality": quality ?? NSNull()
+            "quality": quality?.rawValue ?? NSNull()
         ]
     }
 }

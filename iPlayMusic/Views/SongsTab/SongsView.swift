@@ -6,16 +6,21 @@
 //
 
 import SwiftUI
+import RealmSwift
+import Realm
 import SkeletonUI
 
 struct SongsView: View {
     @Environment(\.colorScheme) private var systemScheme
     @EnvironmentObject var vmNewRelease: NewReleaseViewModel
+    @EnvironmentObject var networkManager: NetworkManager
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmSong: SongViewModel = .init()
     @StateObject private var vmSuggestionSong: SongSuggestionViewModel = .init()
     @StateObject private var vmSongRealm: SongRealmViewModel = .init()
+    
+    @ObservedResults(SongRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoriteSongs: Results<SongRealmModel>
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -43,13 +48,13 @@ struct SongsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
             ZStack {
-                if ((!vmSong.songs.isEmpty) || (!vmNewRelease.newSongs.isEmpty)) {
-                    ScrollView(.vertical) {
-                        LazyVStack(spacing: 0) {
+                ScrollView(.vertical) {
+                    LazyVStack(spacing: 0) {
+                        if ((!vmSong.songs.isEmpty) || (!vmNewRelease.newSongs.isEmpty)) {
                             if vmSong.songs.isEmpty {
                                 LazyVStack {
                                     ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
-                                        SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
+                                        SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                             .onTapGesture {
                                                 Task {
@@ -61,7 +66,7 @@ struct SongsView: View {
                             } else {
                                 LazyVStack {
                                     ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
-                                        SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, vmSongRealm.mapToRealmSong(from: $1)) })
+                                        SongItemView(song: song, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                             .onAppear {
                                                 if index == vmSong.songs.count - 3 {
@@ -81,12 +86,36 @@ struct SongsView: View {
                                     }
                                 }
                             }
+                            
+                            if !favoriteSongs.isEmpty {
+                                VStack {
+                                    Text("Favorite Liked 😘")
+                                        .font(.system(size: 15, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    LazyVStack {
+                                        ForEach(Array(favoriteSongs.enumerated()), id: \.element.id) { index, favoriteSong in
+                                            if let songObj = convertSongRealmToSongModel(song: favoriteSong) {
+                                                SongItemView(song: songObj, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
+                                                    .frame(height: 55)
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                Text("Like songs to see them here!! ❤️")
+                                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                    .foregroundStyle(theme.subText(isDark: isDark).opacity(0.2))
+                                    .frame(height: 35, alignment: .bottom)
+                            }
+                        } else {
+                            EmptyDataView(icon: "music.note.slash", title: "No Songs Found", subTitle: "Search for a song to start listening.")
                         }
-                        .padding(.bottom)
-                        .padding(.horizontal)
                     }
-                } else {
-                    EmptyDataView(icon: "music.note.slash", title: "No Songs Found", subTitle: "Search for a song to start listening.")
+                    .padding(.bottom)
+                    .padding(.horizontal)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,9 +127,26 @@ struct SongsView: View {
             }
 #endif
         }
+//        .onAppear {
+//            if let oneSong = favoriteSongs.first {
+//                if let songModelObj = convertSongRealmToSongModel(song: oneSong) {
+//                    print(songModelObj.id)
+//                    print(songModelObj.name ?? "")
+//                }
+//            }
+//        }
     }
     
-    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongRealmModel) {
+    private func convertSongRealmToSongModel(song: SongRealmModel) -> SongModel? {
+        do {
+            return try song.toSongModel()
+        } catch {
+            print(error)
+            return nil
+        }
+    }
+    
+    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
         switch type {
         case .play:
             print("Play")
@@ -109,7 +155,28 @@ struct SongsView: View {
         case .addToQueue:
             print("Add To Queue")
         case .like:
-            print("Like")
+            Task {
+                do {
+                    vmSongRealm.isLoading = true
+                    let likedSong = try await vmSongRealm.toggleLike(song: song)
+                    print(likedSong.toJSON())
+                    vmSongRealm.errorMessage = nil
+                    vmSongRealm.isLoading = false
+                    
+                    if likedSong.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedSong)
+                } catch {
+                    vmSongRealm.isLoading = false
+                    vmSongRealm.errorMessage = error.localizedDescription
+                }
+            }
         case .download:
             print("Download")
         }
@@ -134,7 +201,10 @@ struct SongItemView: View {
     
     let song: SongModel
     @Binding var isLoading: Bool
+    @ObservedObject var vmSongRealm: SongRealmViewModel = .init()
     let menuAction: ((SongMenuActionType, SongModel) -> Void)
+    
+    @State private var isLiked: Bool = false
         
     var body: some View {
 #if os(macOS)
@@ -166,9 +236,10 @@ struct SongItemView: View {
                         .help("Download")
                 }
                 Button {
+                    isLiked.toggle()
                     menuAction(.like, song)
                 } label: {
-                    Image(systemName: "heart.fill")
+                    Image(systemName: isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 20, weight: .light, design: .default))
                         .foregroundStyle(.pink)
                         .frame(width: 30, height: 30)
@@ -187,6 +258,9 @@ struct SongItemView: View {
                     RoundedRectangle(cornerRadius: 7)
                         .stroke(theme.secondaryCard(isDark: isDark), lineWidth: 1)
                 }
+        }
+        .onAppear {
+            isLiked = vmSongRealm.isSongLiked(songId: song.id)
         }
 #else
         SwipeView {

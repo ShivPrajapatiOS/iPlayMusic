@@ -97,6 +97,7 @@ struct ContentView: View {
                             case .songs:
                                 SongsView()
                                     .environmentObject(vmNewRelease)
+                                    .environmentObject(networkManager)
                             case .playlists:
                                 PlaylistView()
                                     .environmentObject(vmNewRelease)
@@ -138,6 +139,10 @@ struct ContentView: View {
             .sheet(isPresented: $showCreatePlaylist) {
                 CreatePlaylistView(vmMyPlaylist: .init(), showCreatePlaylist: $showCreatePlaylist)
             }
+            .sheet(isPresented: $appState.isShowPurchase, content: {
+                PurchaseView()
+                    .frame(width: 800, height: 475)
+            })
             .onChange(of: StateManager.shared.musicLanguage) {
                 vmNewRelease.startLoading()
             }

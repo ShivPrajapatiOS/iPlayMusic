@@ -13,6 +13,7 @@ struct AlbumDetailsView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
+    @StateObject private var vmSongRealm: SongRealmViewModel = .init()
     
     
     private var isDark: Bool {

@@ -179,11 +179,17 @@ struct PlaylistItemView: View {
                     .lineLimit(1)
                     .skeleton(active: isLoading)
                 
-                Text("• Type: \(playlist.type ?? "Unknown")")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(theme.subText(isDark: isDark))
-                    .lineLimit(1)
-                    .skeleton(active: isLoading)
+                HStack {
+                    if let sognCount = playlist.songCount {
+                        Text("\(sognCount) Songs • ")
+                    }
+                    Text("Type: \(playlist.type ?? "Unknown")")
+                    Spacer()
+                }
+                .font(.system(size: 9, weight: .regular))
+                .foregroundStyle(theme.subText(isDark: isDark))
+                .lineLimit(1)
+                .skeleton(active: isLoading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

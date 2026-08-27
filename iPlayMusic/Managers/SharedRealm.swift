@@ -25,7 +25,7 @@ enum SharedRealm {
         let realmURL = containerURL.appendingPathComponent(fileName)
         print("Recommended Shared Realm Path (App Group): \(realmURL)")
         
-        let config = Realm.Configuration(fileURL: realmURL, schemaVersion: 8, migrationBlock: { migration, oldSchemaVersion in
+        let config = Realm.Configuration(fileURL: realmURL, schemaVersion: 9, migrationBlock: { migration, oldSchemaVersion in
                 print(migration.oldSchema)
                 print(migration.newSchema)
                 print(oldSchemaVersion)

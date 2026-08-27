@@ -11,6 +11,7 @@ import Combine
 class StateManager: ObservableObject {
     static let shared: StateManager = .init()
     
+    @AppStorage("hasPurchased") var hasPurchased: Bool = false
     @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
     @AppStorage("uid") var uid: String = ""
     @AppStorage("isAnonymous") var isAnonymous: Bool = false
@@ -20,6 +21,8 @@ class StateManager: ObservableObject {
     @Published var isSplash: Bool = true
     @Published var showFullPlayer = false
     @Published var isSyncing: Bool = false
+    
+    @Published var isShowPurchase: Bool = false
     
 #if os(macOS)
     @Published var showQueuePlaylist: Bool = false

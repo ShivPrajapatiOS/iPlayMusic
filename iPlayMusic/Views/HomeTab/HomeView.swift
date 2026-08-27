@@ -25,7 +25,7 @@ struct HomeView: View {
 #endif
     
     var body: some View {
-        GeometryReader { geoProxy in
+        NavigationStack {
 #if !os(macOS)
             ZStack {
                 theme.background(isDark: isDark).ignoresSafeArea()
@@ -87,9 +87,9 @@ struct HomeView: View {
                                     SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { _, _ in })
                                         .frame(height: 55)
                                         .onTapGesture {
-//                                            Task {
-//                                                await vmSuggestionSong.getSuggestion(songId: newSong.id)
-//                                            }
+                                            //                                            Task {
+                                            //                                                await vmSuggestionSong.getSuggestion(songId: newSong.id)
+                                            //                                            }
                                         }
                                 }
                             }
@@ -107,8 +107,13 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newAlbums, id: \.id) { newAlbum in
-                                            AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
-                                                .frame(width: 150, height: 190)
+                                            NavigationLink {
+                                                AlbumDetailsView(vmAlbum: .init(), album: newAlbum)
+                                            } label: {
+                                                AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
+                                                    .frame(width: 150, height: 190)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal)
@@ -127,8 +132,13 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newPlaylists, id: \.id) { newPlaylist in
-                                            PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
-                                                .frame(width: 150, height: 190)
+                                            NavigationLink {
+                                                PlaylistDetailsView(vmPlaylist: .init(), playlist: newPlaylist)
+                                            } label: {
+                                                PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
+                                                    .frame(width: 150, height: 190)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal)
@@ -147,8 +157,13 @@ struct HomeView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newArtists, id: \.id) { newArtist in
-                                            ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
-                                                .frame(width: 150, height: 190)
+                                            NavigationLink {
+                                                ArtistDetailsView(vmArtist: .init(), artist: newArtist)
+                                            } label: {
+                                                ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
+                                                    .frame(width: 150, height: 190)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
                                     }
                                     .padding(.horizontal)

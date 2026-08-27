@@ -16,6 +16,7 @@ struct iPlayMusicApp: App {
     
     @StateObject private var appState: StateManager = .shared
     @StateObject private var theme = ThemeManager.shared
+    @StateObject private var purchase = PurchaseManager.shared
     
     var body: some Scene {
         WindowGroup {

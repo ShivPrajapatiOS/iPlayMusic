@@ -25,8 +25,8 @@ class RemoteConfigResponse{
         let userDefaults = UserDefaults.standard
         userDefaults.register(
             defaults: [
-                "isReview": true,
-                "showOfferCancelCount": 100
+                "isReview": UserDefaults.inReview,
+                "closeDelay": UserDefaults.closeDelay,
             ]
         )
         

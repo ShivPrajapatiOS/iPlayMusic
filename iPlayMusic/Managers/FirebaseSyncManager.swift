@@ -111,7 +111,64 @@ class FirebaseSyncManager {
             }
         }
     }
+    
+    
+    // MARK: - Song Upload Firebase methods
+    func addSong(song: SongRealmModel) async throws -> DatabaseReference {
+        let _ = try checkUserAuth()
+        let songTable = try getRef(table: .songTable)
+        let songID = song._id.stringValue
+        let songJsonData = song.toJSON()
+        StateManager.shared.isSyncing = true
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            songTable.child(songID).setValue(songJsonData) { error, reference in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: reference)
+                }
+                StateManager.shared.isSyncing = false
+            }
+        }
+    }
+    
+    func updateSong(song: SongRealmModel) async throws -> DatabaseReference {
+        let _ = try checkUserAuth()
+        let songTable = try getRef(table: .songTable)
+        let songID = song._id.stringValue
+        let updateJsonData = song.toJSON()
+        StateManager.shared.isSyncing = true
+        return try await withCheckedThrowingContinuation { continuation in
+            songTable.child(songID).updateChildValues(updateJsonData) { error, reference in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: reference)
+                }
+                StateManager.shared.isSyncing = false
+            }
+        }
+    }
+    
+    func deleteSongByIdSync(_ songID: String) async throws -> DatabaseReference {
+        let _ = try checkUserAuth()
+        let songTable = try getRef(table: .songTable)
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            songTable.child(songID).removeValue { error, reference in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: reference)
+                }
+                StateManager.shared.isSyncing = false
+            }
+        }
+    }
 }
+
+//ye models hai realm ka and fir esme sab me ek method hai toJSON ka us se jeson banta hai usko mane SongRealmViewModel me niche SongModel type ko SongRealmModel me conver kiya hai fir usko me firebase me save karva raha hu to usme conflict ho raha hai jo mane starting me btaya tha vesa app kam karni baand kar deti hai koi asa type issue kar raha hai to file karo kya issue hai jab firebase me save hone jata hai tab ye conflict ho raha hai 
 
 // MARK: - Upload On Firebase After Realm isSync Completed
 extension FirebaseSyncManager {
@@ -122,6 +179,11 @@ extension FirebaseSyncManager {
             guard let myPlaylistToUpdate = realm.object(ofType: MyPlaylistRealmModel.self, forPrimaryKey: obj._id) else { throw RealmError.invalidID }
             try realm.write {
                 myPlaylistToUpdate.isSync = true
+            }
+        }  else if let obj = object as? SongRealmModel {
+            guard let songToUpdate = realm.object(ofType: SongRealmModel.self, forPrimaryKey: obj._id) else { throw RealmError.invalidID }
+            try realm.write {
+                songToUpdate.isSync = true
             }
         }
     }
@@ -201,6 +263,7 @@ extension FirebaseSyncManager {
         song.updateAt = Date(timeIntervalSince1970: dict["createAt"] as? Double ?? Date().timeIntervalSince1970)
         song.isSync = dict["isSync"] as? Bool ?? false
         song.isDeleted = dict["isDeleted"] as? Bool ?? false
+        song.isLike = dict["isLike"] as? Bool ?? false
         
         if let imageDict = dict["image"] as? [String: Any] {
             let image = ImageQualityRealmModel()

@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import SwiftUI
+import Combine
 
 /// Singleton jo song audio files ko app ki private Documents directory ke
 /// andar "DownloadedSongs" folder me download/save/delete/check karta hai.
@@ -18,12 +20,33 @@ import Foundation
 /// Ye audio bytes KABHI Firebase par nahi jaate — sirf "downloaded hai ya
 /// nahi" (isDownloaded flag) sync hota hai. Actual audio har device khud
 /// JioSaavn ke URL se download karta hai (free, quota-safe).
-final class AudioFileManager {
+final class AudioFileManager: NSObject, ObservableObject {
     
     static let shared = AudioFileManager()
-    private init() {}
+    
+    /// songId -> progress (0.0 to 1.0). SwiftUI views ise @Published ke
+    /// through observe kar sakte hain (progress bar dikhane ke liye).
+    @Published private(set) var downloadProgress: [String: Double] = [:]
     
     private let audioFolderName = "DownloadedSongs"
+    
+    private struct DownloadContext {
+        let songId: String
+        let destinationURL: URL
+        let continuation: CheckedContinuation<URL, Error>
+    }
+    
+    /// taskIdentifier -> context, taaki delegate callbacks me pata chale
+    /// ki kaunsa task kis song ka hai.
+    private var activeDownloads: [Int: DownloadContext] = [:]
+    
+    private lazy var session: URLSession = {
+        URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+    }()
+    
+    private override init() {
+        super.init()
+    }
     
     private var audioDirectory: URL {
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -47,15 +70,23 @@ final class AudioFileManager {
         return FileManager.default.fileExists(atPath: localFileURL(fileName: fileName).path)
     }
     
+    /// Current progress ek specific song ka (0.0 to 1.0). Agar download
+    /// active nahi hai to nil.
+    func progress(for songId: String) -> Double? {
+        downloadProgress[songId]
+    }
+    
     // MARK: - Download
     
     /// Remote JioSaavn URL se audio download karke local disk par save karta hai.
+    /// Progress `downloadProgress[songId]` ke through live update hota rehta hai.
+    ///
     /// Return value: saved fileName jo Realm me `localAudioFileName` field me
     /// store karna hai.
     ///
     /// - Parameters:
     ///   - remoteURL: JioSaavn song ka streaming/download URL (`song.url` ya `song.downloadURL?.url`)
-    ///   - songId: Unique song identifier, filename banane ke liye use hota hai
+    ///   - songId: Unique song identifier, filename banane ke liye aur progress track karne ke liye use hota hai
     @discardableResult
     func downloadAudio(from remoteURL: URL, songId: String) async throws -> String {
         let fileExtension = remoteURL.pathExtension.isEmpty ? "m4a" : remoteURL.pathExtension
@@ -67,19 +98,24 @@ final class AudioFileManager {
             return fileName
         }
         
-        let (tempURL, response) = try await URLSession.shared.download(from: remoteURL)
+        await MainActor.run { downloadProgress[songId] = 0 }
         
-        if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
-            throw URLError(.badServerResponse)
+        do {
+            let finalURL: URL = try await withCheckedThrowingContinuation { continuation in
+                let task = session.downloadTask(with: remoteURL)
+                activeDownloads[task.taskIdentifier] = DownloadContext(
+                    songId: songId,
+                    destinationURL: destinationURL,
+                    continuation: continuation
+                )
+                task.resume()
+            }
+            await MainActor.run { downloadProgress.removeValue(forKey: songId) }
+            return finalURL.lastPathComponent
+        } catch {
+            await MainActor.run { downloadProgress.removeValue(forKey: songId) }
+            throw error
         }
-        
-        // Agar koi purani incomplete file pehle se hai to hata do
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-            try? FileManager.default.removeItem(at: destinationURL)
-        }
-        
-        try FileManager.default.moveItem(at: tempURL, to: destinationURL)
-        return fileName
     }
     
     // MARK: - Delete
@@ -115,3 +151,51 @@ final class AudioFileManager {
     }
 }
 
+// MARK: - URLSessionDownloadDelegate
+
+extension AudioFileManager: URLSessionDownloadDelegate {
+    
+    /// Har chunk aane par call hota hai — yahi se live percentage nikalta hai.
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        guard let context = activeDownloads[downloadTask.taskIdentifier],
+              totalBytesExpectedToWrite > 0 else { return }
+        
+        let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        
+        Task { @MainActor in
+            self.downloadProgress[context.songId] = progress
+        }
+    }
+    
+    /// Download poora hone par temp file ko final destination par move karta hai.
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didFinishDownloadingTo location: URL
+    ) {
+        guard let context = activeDownloads.removeValue(forKey: downloadTask.taskIdentifier) else { return }
+        
+        do {
+            if FileManager.default.fileExists(atPath: context.destinationURL.path) {
+                try FileManager.default.removeItem(at: context.destinationURL)
+            }
+            try FileManager.default.moveItem(at: location, to: context.destinationURL)
+            context.continuation.resume(returning: context.destinationURL)
+        } catch {
+            context.continuation.resume(throwing: error)
+        }
+    }
+    
+    /// Network error / cancel hone par continuation ko fail karta hai
+    /// (warna await hamesha ke liye latka reh jayega).
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard let error, let context = activeDownloads.removeValue(forKey: task.taskIdentifier) else { return }
+        context.continuation.resume(throwing: error)
+    }
+}

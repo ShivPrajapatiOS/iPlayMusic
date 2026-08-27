@@ -60,6 +60,7 @@ struct QueueListPlayView: View {
             }
         }
         .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
+        .containerShape(Rectangle())
     }
 }
 

@@ -11,8 +11,10 @@ import SwiftUI
 
 struct AppConstants {
     // 0. Purchase Plan Identifier
-    static let YEARLY_ID = "com.iplay.music.yearly"
-    static let MONTHLY_ID = "com.iplay.music.monthly"
+    static let YEARLY_ID = "com.iplay.iplaymusic.yearly"
+    static let MONTHLY_ID = "com.iplay.iplaymusic.monthly"
+    static let WEEKLY_ID = "com.iplay.iplaymusic.weekly"
+    
     static let SHARED_SECRET_KEY = "cde2cbf2ff1041d885dce7e8aceb5103"
     
     // 1. App Group Identifier

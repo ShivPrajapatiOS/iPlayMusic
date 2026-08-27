@@ -102,10 +102,13 @@ extension UIApplication {
 
 public func remoteConfigCall() {
     RemoteConfigResponse.getResponse {
-        DispatchQueue.main.async {
-            withAnimation(.easeInOut.delay(1)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: {
+            withAnimation(.easeInOut) {
                 StateManager.shared.isSplash = false
             }
-        }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: {
+                StateManager.shared.isShowPurchase = ((!StateManager.shared.hasPurchased) && (!StateManager.shared.isShowPurchase))
+            })
+        })
     }
 }
