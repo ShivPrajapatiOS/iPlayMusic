@@ -107,7 +107,7 @@ public func remoteConfigCall() {
                 StateManager.shared.isSplash = false
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: {
-                StateManager.shared.isShowPurchase = ((!StateManager.shared.hasPurchased) && (!StateManager.shared.isShowPurchase))
+                StateManager.shared.isShowPurchase = ((!StateManager.shared.isPurchased) && (!StateManager.shared.isShowPurchase))
             })
         })
     }

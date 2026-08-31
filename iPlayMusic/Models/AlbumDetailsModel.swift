@@ -22,6 +22,19 @@ struct AlbumDetailsModel: Decodable {
     let image: [ImageQuality]?
     let songs: [SongModel]?
     
+    var allArtists: [ArtistModel]? {
+        let all = (artists?.all ?? [])
+            + (artists?.featured ?? [])
+            + (artists?.primary ?? [])
+
+        let uniqueArtists = Dictionary(
+            all.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        return Array(uniqueArtists.values)
+    }
+    
     var thumbnailURL: String? {
         return image?.first(where: { $0.quality == .high })?.url
     }

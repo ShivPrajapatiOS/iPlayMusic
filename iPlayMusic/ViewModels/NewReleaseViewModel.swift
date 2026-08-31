@@ -11,6 +11,8 @@ import Combine
 @MainActor
 final class NewReleaseViewModel: BaseViewModel {
     
+    static let shared: NewReleaseViewModel = .init()
+    
     @Published var newReleases: [ScrapedItem] = []
     @Published var newSongs: [SongModel] = []
     @Published var newAlbums: [AlbumModel] = []

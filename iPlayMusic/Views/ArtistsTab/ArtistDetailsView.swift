@@ -14,7 +14,12 @@ struct ArtistDetailsView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
-    @StateObject private var vmSongRealm: SongRealmViewModel = .init()
+    @StateObject private var vmArtist: ArtistViewModel = .init()
+    @StateObject private var vmPlaylist: PlaylistViewModel = .init()
+    @StateObject private var vmAlbum: AlbumViewModel = .init()
+    @ObservedObject var vmSongRealm: SongRealmViewModel = .shared
+    @ObservedObject var vmAlbumRealm: AlbumRealmViewModel = .shared
+    @ObservedObject var vmPlaylistRealm: PlaylistRealmViewModel = .shared
     
     
     private var isDark: Bool {
@@ -27,9 +32,6 @@ struct ArtistDetailsView: View {
     @State private var showImage = false
     
     
-    @ObservedObject var vmArtist: ArtistViewModel
-    @StateObject private var vmPlaylist: PlaylistViewModel = .init()
-    @StateObject private var vmAlbum: AlbumViewModel = .init()
     let artist: ArtistModel
     
     @State private var randomTopSongs: [SongModel] = []
@@ -119,7 +121,7 @@ struct ArtistDetailsView: View {
                                 .frame(height: 45)
                                 LazyVStack {
                                     ForEach(randomTopSongs, id: \.id) { song in
-                                        SongItemView(song: song, isLoading: $vmArtist.isLoading, menuAction: { _, _ in })
+                                        SongItemView(song: song, isLoading: $vmArtist.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                     }
                                 }
@@ -138,9 +140,9 @@ struct ArtistDetailsView: View {
                                         LazyHStack(spacing: 12) {
                                             ForEach(vmPlaylist.playlists, id: \.id) { playlist in
                                                 NavigationLink {
-                                                    PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: playlist)
+                                                    PlaylistDetailsView(playlist: playlist)
                                                 } label: {
-                                                    PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading)
+                                                    PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading, action: { playlistMenuActionPerform($0, $1) })
                                                     .frame(width: 150, height: 190)
                                                 }
                                                 .buttonStyle(.plain)
@@ -163,9 +165,9 @@ struct ArtistDetailsView: View {
                                         LazyHStack(spacing: 12) {
                                             ForEach(vmAlbum.albums, id: \.id) { album in
                                                 NavigationLink {
-                                                    AlbumDetailsView(vmAlbum: vmAlbum, album: album)
+                                                    AlbumDetailsView(album: album)
                                                 } label: {
-                                                    AlbumItemView(album: album, isLoading: $vmAlbum.isLoading)
+                                                    AlbumItemView(album: album, isLoading: $vmAlbum.isLoading, action: { albumMenuActionPerform($0, $1) })
                                                     .frame(width: 150, height: 190)
                                                 }
                                                 .buttonStyle(.plain)
@@ -186,44 +188,131 @@ struct ArtistDetailsView: View {
                 }
             }
             .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
-            .task {
-                Task {
-                    await vmArtist.loadArtist(id: artist.id)
-                    if let allSongs = vmArtist.artistInfo?.topSongs {
-                        randomTopSongs = Array(allSongs.shuffled().prefix(5))
-                    }
-                }
-                
-                Task {
-                    if let artistName = artist.name {
-                        await vmPlaylist.searchPlaylists(query: artistName)
-                    }
-                }
-                Task {
-                    if let artistName = artist.name {
-                        await vmAlbum.searchAlbums(query: artistName)
-                    }
+            .task(priority: .userInitiated) {
+                await vmArtist.loadArtist(id: artist.id)
+                if let allSongs = vmArtist.artistInfo?.topSongs {
+                    randomTopSongs = Array(allSongs.shuffled().prefix(5))
                 }
             }
+            .task(priority: .utility) {
+                guard let artistName = artist.name else { return }
+                async let playlists: () = vmPlaylist.searchPlaylists(query: artistName)
+                async let albums: () = vmAlbum.searchAlbums(query: artistName)
+                _ = await (playlists, albums)
+            }
             .onAppear {
-                appState.isDetailScreenActive = true
                 showImage = false
                 withAnimation(.easeOut(duration: 0.5)) {
                     showImage = true
                 }
             }
             .onDisappear {
-                appState.isDetailScreenActive = false
                 showImage = false
             }
+            .trackDetailScreenLifecycle()
 #endif
         }
         .navigationBarBackButtonHidden()
     }
+    
+    private func albumMenuActionPerform(_ type: AlbumItemMenuTypes, _ album: AlbumModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmAlbumRealm.isLoading = true
+                    let likedAlbum = try await vmAlbumRealm.toggleLikeAlbum(album: album)
+                    print(likedAlbum.toJSON())
+                    vmAlbumRealm.errorMessage = nil
+                    vmAlbumRealm.isLoading = false
+                    
+                    if likedAlbum.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedAlbum)
+                } catch {
+                    vmAlbumRealm.isLoading = false
+                    vmAlbumRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    private func playlistMenuActionPerform(_ type: PlaylistItemMenuTypes, _ playlist: PlaylistModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmPlaylistRealm.isLoading = true
+                    let likedPlaylist = try await vmPlaylistRealm.toggleLikePlaylist(playlist: playlist)
+                    print(likedPlaylist.toJSON())
+                    vmPlaylistRealm.errorMessage = nil
+                    vmPlaylistRealm.isLoading = false
+                    
+                    if likedPlaylist.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updatePlaylist(playlist: likedPlaylist)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updatePlaylist(playlist: likedPlaylist)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedPlaylist)
+                } catch {
+                    vmPlaylistRealm.isLoading = false
+                    vmPlaylistRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .addToMyplaylist:
+            print("Add To My Playlist")
+        case .addToQueue:
+            print("Add To Queue")
+        case .like:
+            Task {
+                do {
+                    vmSongRealm.isLoading = true
+                    let likedSong = try await vmSongRealm.toggleLike(song: song)
+                    print(likedSong.toJSON())
+                    vmSongRealm.errorMessage = nil
+                    vmSongRealm.isLoading = false
+                    
+                    if likedSong.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedSong)
+                } catch {
+                    vmSongRealm.isLoading = false
+                    vmSongRealm.errorMessage = error.localizedDescription
+                }
+            }
+        case .download:
+            print("Download")
+        }
+    }
 }
 
 #Preview {
-    ArtistDetailsView(vmArtist: .init(), artist: artist1)
+    ArtistDetailsView(artist: artist1)
 }
 
 let artist1 = ArtistModel(

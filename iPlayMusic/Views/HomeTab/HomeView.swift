@@ -9,8 +9,12 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .shared
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var vmSongRealm: SongRealmViewModel = .shared
+    @StateObject private var vmAlbumRealm: AlbumRealmViewModel = .shared
+    @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
+    @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -84,7 +88,7 @@ struct HomeView: View {
                                     .frame(height: 45)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
-                                    SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { _, _ in })
+                                    SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                         .frame(height: 55)
                                         .onTapGesture {
                                             //                                            Task {
@@ -108,9 +112,9 @@ struct HomeView: View {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newAlbums, id: \.id) { newAlbum in
                                             NavigationLink {
-                                                AlbumDetailsView(vmAlbum: .init(), album: newAlbum)
+                                                AlbumDetailsView(album: newAlbum)
                                             } label: {
-                                                AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
+                                                AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading, action: { _, _ in })
                                                     .frame(width: 150, height: 190)
                                             }
                                             .buttonStyle(.plain)
@@ -133,9 +137,9 @@ struct HomeView: View {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newPlaylists, id: \.id) { newPlaylist in
                                             NavigationLink {
-                                                PlaylistDetailsView(vmPlaylist: .init(), playlist: newPlaylist)
+                                                PlaylistDetailsView(playlist: newPlaylist)
                                             } label: {
-                                                PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
+                                                PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading, action: { _, _ in })
                                                     .frame(width: 150, height: 190)
                                             }
                                             .buttonStyle(.plain)
@@ -158,9 +162,9 @@ struct HomeView: View {
                                     HStack(spacing: 12) {
                                         ForEach(vmNewRelease.newArtists, id: \.id) { newArtist in
                                             NavigationLink {
-                                                ArtistDetailsView(vmArtist: .init(), artist: newArtist)
+                                                ArtistDetailsView(artist: newArtist)
                                             } label: {
-                                                ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
+                                                ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading, action: { artistMenuActionPerform($0, $1) })
                                                     .frame(width: 150, height: 190)
                                             }
                                             .buttonStyle(.plain)
@@ -227,6 +231,99 @@ struct HomeView: View {
 #endif
         }
     }
+    
+    private func albumMenuActionPerform(_ type: AlbumItemMenuTypes, _ album: AlbumModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmAlbumRealm.isLoading = true
+                    let likedAlbum = try await vmAlbumRealm.toggleLikeAlbum(album: album)
+                    print(likedAlbum.toJSON())
+                    vmAlbumRealm.errorMessage = nil
+                    vmAlbumRealm.isLoading = false
+                    
+                    if likedAlbum.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedAlbum)
+                } catch {
+                    vmAlbumRealm.isLoading = false
+                    vmAlbumRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    
+    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .addToMyplaylist:
+            print("Add To My Playlist")
+        case .addToQueue:
+            print("Add To Queue")
+        case .like:
+            Task {
+                do {
+                    vmSongRealm.isLoading = true
+                    let likedSong = try await vmSongRealm.toggleLike(song: song)
+                    print(likedSong.toJSON())
+                    vmSongRealm.errorMessage = nil
+                    vmSongRealm.isLoading = false
+                    
+                    if likedSong.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedSong)
+                } catch {
+                    vmSongRealm.isLoading = false
+                    vmSongRealm.errorMessage = error.localizedDescription
+                }
+            }
+        case .download:
+            print("Download")
+        }
+    }
+    
+    private func artistMenuActionPerform(_ type: ArtistItemMenuTypes, _ artist: ArtistModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmArtistRealm.isLoading = true
+                    let likedArtist = try await vmArtistRealm.toggleLikeArtist(artist: artist)
+                    vmArtistRealm.errorMessage = nil
+                    vmArtistRealm.isLoading = false
+                    
+                    if likedArtist.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedArtist)
+                } catch {
+                    vmArtistRealm.isLoading = false
+                    vmArtistRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
 #if !os(macOS)
@@ -244,6 +341,5 @@ struct HomeView_Preview: View {
     HomeView_Preview()
 #else
     HomeView()
-        .environmentObject(NewReleaseViewModel())
 #endif
 }

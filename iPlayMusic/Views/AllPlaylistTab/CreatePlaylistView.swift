@@ -37,6 +37,12 @@ struct CreatePlaylistView: View {
     @State private var isFileImporterPresented: Bool = false
         
     var body: some View {
+#if !os(macOS)
+        ZStack {
+            
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+#else
         ZStack {
             VStack(spacing: 50) {
                 RoundedRectangle(cornerRadius: 7)
@@ -168,7 +174,7 @@ struct CreatePlaylistView: View {
                             }
                     }
                     .disabled(vmMyPlaylist.txtNewPlaylist.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
+                    
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
@@ -189,21 +195,17 @@ struct CreatePlaylistView: View {
                         fileURL.stopAccessingSecurityScopedResource()
                     }
                 }
-                
-#if os(macOS)
-                    let compressedData: Data? = NSImage(contentsOf: fileURL).flatMap {
-                        ImageCompressor.compress($0)
-                    }
+                let compressedData: Data? = NSImage(contentsOf: fileURL).flatMap {
+                    ImageCompressor.compress($0)
+                }
                 withAnimation {
                     vmMyPlaylist.imageData = compressedData
                 }
-#else
-                if let data = try? Data(contentsOf: fileURL) {
-                    withAnimation {
-                        vmMyPlaylist.imageData = compressedData
-                    }
-                }
-#endif
+                //                if let data = try? Data(contentsOf: fileURL) {
+                //                    withAnimation {
+                //                        vmMyPlaylist.imageData = compressedData
+                //                    }
+                //                }
             case .failure(let error):
                 print("Error selecting file: \(error.localizedDescription)")
             }
@@ -215,6 +217,7 @@ struct CreatePlaylistView: View {
                 vmMyPlaylist.imageData = playlist.imageData
             }
         }
+#endif
     }
 }
 

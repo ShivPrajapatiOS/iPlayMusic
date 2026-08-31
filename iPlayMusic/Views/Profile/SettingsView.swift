@@ -266,7 +266,7 @@ struct AccountTabView: View {
                             }
                             
                             VStack(spacing: 0) {
-                                if !appState.hasPurchased {
+                                if !appState.isPurchased {
                                     HStack {
                                         Image(systemName: "crown")
                                             .resizable()

@@ -29,6 +29,11 @@ struct PlaylistDetailsModel: Decodable, Identifiable {
     let firstname: String?
     let lastname: String?
     let isFollowed: Bool?
+    
+    var allArtists: [ArtistModel]? {
+        let uniqueArtists = Dictionary((artists ?? []).map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return Array(uniqueArtists.values)
+    }
 
     var thumbnailURL: String? {
         return image?.first(where: { $0.quality == .high })?.url

@@ -15,8 +15,9 @@ struct PlaylistDetailsView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
-    @StateObject private var vmSongRealm: SongRealmViewModel = .init()
-    
+    @StateObject private var vmSongRealm: SongRealmViewModel = .shared
+    @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
+    @StateObject var vmPlaylist: PlaylistViewModel = .init()
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -25,10 +26,8 @@ struct PlaylistDetailsView: View {
         return theme.themeMode == .dark
     }
     
-    @State private var showImage = false
+    @State private var showImage = false    
     
-    
-    @ObservedObject var vmPlaylist: PlaylistViewModel
     let playlist: PlaylistModel
         
     var body: some View {
@@ -93,11 +92,35 @@ struct PlaylistDetailsView: View {
                         VStack(spacing: 15) {
                             LazyVStack {
                                 ForEach(vmPlaylist.detailsPlaylist?.songs ?? [], id: \.id) { song in
-                                    SongItemView(song: song, isLoading: $vmPlaylist.isLoading, menuAction: { _, _ in })
+                                    SongItemView(song: song, isLoading: $vmPlaylist.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                         .frame(height: 55)
                                 }
                             }
                             .padding(.horizontal)
+                        }
+                        if let playlistArtists = vmPlaylist.detailsPlaylist?.allArtists, (!playlistArtists.isEmpty) {
+                            VStack(spacing: 15) {
+                                Text("Playlist Most Artists 🎙️")
+                                    .font(.system(size: 15, weight: .semibold, design: .default))
+                                    .foregroundStyle(theme.subText(isDark: isDark))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(height: 45)
+                                    .padding(.horizontal)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    LazyHStack(spacing: 20) {
+                                        ForEach(playlistArtists, id: \.id) { artist in
+                                            NavigationLink {
+                                                ArtistDetailsView(artist: artist)
+                                            } label: {
+                                                CircleArtistItemView(artist: artist, isLoading: $vmPlaylist.isLoading, action: { artistMenuActionPerform($0, $1) })
+                                                    .frame(width: 150, height: 190)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
                         }
                     }
                 }
@@ -113,19 +136,82 @@ struct PlaylistDetailsView: View {
                 await vmPlaylist.getPlaylistDetails(playlist.id)
             }
             .onAppear {
-                appState.isDetailScreenActive = true
                 showImage = false
                 withAnimation(.easeOut(duration: 0.5)) {
                     showImage = true
                 }
             }
             .onDisappear {
-                appState.isDetailScreenActive = false
                 showImage = false
             }
+            .trackDetailScreenLifecycle()
 #endif
         }
         .navigationBarBackButtonHidden()
+    }
+    
+    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .addToMyplaylist:
+            print("Add To My Playlist")
+        case .addToQueue:
+            print("Add To Queue")
+        case .like:
+            Task {
+                do {
+                    vmSongRealm.isLoading = true
+                    let likedSong = try await vmSongRealm.toggleLike(song: song)
+                    print(likedSong.toJSON())
+                    vmSongRealm.errorMessage = nil
+                    vmSongRealm.isLoading = false
+                    
+                    if likedSong.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: likedSong)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedSong)
+                } catch {
+                    vmSongRealm.isLoading = false
+                    vmSongRealm.errorMessage = error.localizedDescription
+                }
+            }
+        case .download:
+            print("Download")
+        }
+    }
+    
+    private func artistMenuActionPerform(_ type: ArtistItemMenuTypes, _ artist: ArtistModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmArtistRealm.isLoading = true
+                    let likedArtist = try await vmArtistRealm.toggleLikeArtist(artist: artist)
+                    vmArtistRealm.errorMessage = nil
+                    vmArtistRealm.isLoading = false
+                    
+                    if likedArtist.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedArtist)
+                } catch {
+                    vmArtistRealm.isLoading = false
+                    vmArtistRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
 }
 
@@ -283,16 +369,15 @@ struct MyPlaylistDetailsView: View {
                 Text("Are you sure you want to delete '\(deleteMyPlaylist.name)'? This action cannot be undone")
             }
             .onAppear {
-                appState.isDetailScreenActive = true
                 showImage = false
                 withAnimation(.easeOut(duration: 0.5)) {
                     showImage = true
                 }
             }
             .onDisappear {
-                appState.isDetailScreenActive = false
                 showImage = false
             }
+            .trackDetailScreenLifecycle()
 #endif
         }
         .navigationBarBackButtonHidden()
@@ -362,7 +447,7 @@ struct MySongItemView: View {
 #else
         SwipeView {
             HStack(spacing: 12) {
-                RoundedRectangleWebImageView(url: URL(string: song.thumbnailURL ?? ""))
+                RoundedRectangleWebImageView(url: URL(string: song.image?.url ?? ""))
                     .frame(width: 40, height: 40)
                     .skeleton(active: isLoading)
                 VStack(alignment: .leading, spacing: 4) {
@@ -370,10 +455,10 @@ struct MySongItemView: View {
                         .font(.system(size: 13, weight: .regular, design: .default))
                         .foregroundStyle(theme.text(isDark: isDark))
                         .skeleton(active: isLoading)
-                    Text(song.artists?.all?.compactMap { $0.name }.joined(separator: ", ") ?? "Unknown")
-                        .font(.system(size: 11, weight: .light, design: .default))
-                        .foregroundStyle(theme.subText(isDark: isDark))
-                        .skeleton(active: isLoading)
+//                    Text(song.artists?.all?.compactMap { $0.name }.joined(separator: ", ") ?? "Unknown")
+//                        .font(.system(size: 11, weight: .light, design: .default))
+//                        .foregroundStyle(theme.subText(isDark: isDark))
+//                        .skeleton(active: isLoading)
                 }
                 .lineLimit(1)
             }

@@ -10,10 +10,11 @@ import SkeletonUI
 
 struct ArtistView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .shared
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmArtist: ArtistViewModel = .init()
+    @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -43,9 +44,9 @@ struct ArtistView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newArtists.enumerated()), id: \.element.id) { index, newArtist in
                                         NavigationLink {
-                                            ArtistDetailsView(vmArtist: vmArtist, artist: newArtist)
+                                            ArtistDetailsView(artist: newArtist)
                                         } label: {
-                                            ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading)
+                                            ArtistItemView(artist: newArtist, isLoading: $vmNewRelease.isLoading, action: { artistMenuActionPerform($0, $1) })
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -54,9 +55,9 @@ struct ArtistView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmArtist.artists.enumerated()), id: \.element.id) { index, artist in
                                         NavigationLink {
-                                            ArtistDetailsView(vmArtist: vmArtist, artist: artist)
+                                            ArtistDetailsView(artist: artist)
                                         } label: {
-                                            ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading)
+                                            ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading, action: { artistMenuActionPerform($0, $1) })
                                                 .onAppear {
                                                     if index == vmArtist.artists.count - 3 {
                                                         Task { await vmArtist.loadMoreArtists() }
@@ -86,13 +87,52 @@ struct ArtistView: View {
 #endif
         }
     }
+    
+    private func artistMenuActionPerform(_ type: ArtistItemMenuTypes, _ artist: ArtistModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmArtistRealm.isLoading = true
+                    let likedArtist = try await vmArtistRealm.toggleLikeArtist(artist: artist)
+                    vmArtistRealm.errorMessage = nil
+                    vmArtistRealm.isLoading = false
+                    
+                    if likedArtist.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateArtist(artist: likedArtist)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedArtist)
+                } catch {
+                    vmArtistRealm.isLoading = false
+                    vmArtistRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Responsive Artist Item View
+enum ArtistItemMenuTypes: String, CaseIterable {
+    case play, like
+    
+    var title: String {
+        switch self {
+        case .play: return "Play"
+        case .like: return "Like"
+        }
+    }
+}
 
 struct ArtistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -103,8 +143,9 @@ struct ArtistItemView: View {
     
     let artist: ArtistModel
     @Binding var isLoading: Bool
-    
+    let action: ((ArtistItemMenuTypes, ArtistModel) -> Void)
     @State private var isHover: Bool = false
+    @State private var isLiked: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -117,7 +158,7 @@ struct ArtistItemView: View {
                 if isHover {
                     HStack {
                         Button {
-                            print("Play")
+                            action(.play, artist)
                         } label: {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 14, weight: .semibold))
@@ -129,9 +170,10 @@ struct ArtistItemView: View {
                         Spacer(minLength: 12)
                         
                         Button {
-                            print("like")
+                            isLiked.toggle()
+                            action(.like, artist)
                         } label: {
-                            Image(systemName: "heart.fill")
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
                                 .font(.system(size: 18, weight: .light))
                                 .frame(width: 32, height: 32)
                                 .foregroundStyle(
@@ -179,10 +221,85 @@ struct ArtistItemView: View {
                 self.isHover = hover
             }
         }
+        .onAppear {
+            isLiked = vmArtistRealm.isArtistLiked(artistId: artist.id)
+        }
+    }
+}
+
+struct CircleArtistItemView: View {
+    @Environment(\.colorScheme) private var systemScheme
+    @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
+
+    private var isDark: Bool {
+        if theme.themeMode == .system {
+            return systemScheme == .dark
+        }
+        return theme.themeMode == .dark
+    }
+    
+    let artist: ArtistModel
+    @Binding var isLoading: Bool
+    let action: ((ArtistItemMenuTypes, ArtistModel) -> Void)
+    @State private var isHover: Bool = false
+    @State private var isLiked: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // MARK: - Responsive Image Container
+            CircleWebImageView(url: URL(string: artist.thumbnailURL ?? ""), thumbnail: "music.microphone")
+            .aspectRatio(1, contentMode: .fit)
+            .skeleton(active: isLoading)
+            .clipShape(Circle())
+            // MARK: - Artist Details
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(artist.name ?? "Unknown Artist")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(theme.text(isDark: isDark))
+                        .lineLimit(1)
+                        .skeleton(active: isLoading)
+                    
+                    Text("Role: \(artist.role ?? "Unknown") • Type: \(artist.type ?? "Unknown")")
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundStyle(theme.subText(isDark: isDark))
+                        .lineLimit(1)
+                        .skeleton(active: isLoading)
+                }
+                if isHover {
+                    Button {
+                        isLiked.toggle()
+                        action(.like, artist)
+                    } label: {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .font(.system(size: 18, weight: .light))
+                            .frame(width: 32, height: 32)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.red, .pink],
+                                    startPoint: .bottomLeading,
+                                    endPoint: .topTrailing
+                                )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Circle())
+        .onHover { hover in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                self.isHover = hover
+            }
+        }
+        .onAppear {
+            isLiked = vmArtistRealm.isArtistLiked(artistId: artist.id)
+        }
     }
 }
 
 #Preview {
     ArtistView()
-        .environmentObject(NewReleaseViewModel())
 }

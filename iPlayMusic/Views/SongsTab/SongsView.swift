@@ -12,13 +12,13 @@ import SkeletonUI
 
 struct SongsView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
     @EnvironmentObject var networkManager: NetworkManager
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .shared
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmSong: SongViewModel = .init()
     @StateObject private var vmSuggestionSong: SongSuggestionViewModel = .init()
-    @StateObject private var vmSongRealm: SongRealmViewModel = .init()
+    @StateObject private var vmSongRealm: SongRealmViewModel = .shared
     
     @ObservedResults(SongRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoriteSongs: Results<SongRealmModel>
 
@@ -38,7 +38,7 @@ struct SongsView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack {
                         ForEach(0...20, id: \.self) { song in
-                            SongItemView(song: song1, isLoading: $vmSong.isLoading)
+                            SongItemView(song: song1, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
                                 .frame(height: 55)
                         }
                     }
@@ -54,7 +54,7 @@ struct SongsView: View {
                             if vmSong.songs.isEmpty {
                                 LazyVStack {
                                     ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
-                                        SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
+                                        SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                             .onTapGesture {
                                                 Task {
@@ -66,7 +66,7 @@ struct SongsView: View {
                             } else {
                                 LazyVStack {
                                     ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
-                                        SongItemView(song: song, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
+                                        SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                             .onAppear {
                                                 if index == vmSong.songs.count - 3 {
@@ -98,7 +98,7 @@ struct SongsView: View {
                                     LazyVStack {
                                         ForEach(Array(favoriteSongs.enumerated()), id: \.element.id) { index, favoriteSong in
                                             if let songObj = convertSongRealmToSongModel(song: favoriteSong) {
-                                                SongItemView(song: songObj, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
+                                                SongItemView(song: songObj, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                                     .frame(height: 55)
                                             }
                                         }
@@ -141,7 +141,6 @@ struct SongsView: View {
         do {
             return try song.toSongModel()
         } catch {
-            print(error)
             return nil
         }
     }
@@ -201,7 +200,7 @@ struct SongItemView: View {
     
     let song: SongModel
     @Binding var isLoading: Bool
-    @ObservedObject var vmSongRealm: SongRealmViewModel = .init()
+    @StateObject private var vmSongRealm: SongRealmViewModel = .shared
     let menuAction: ((SongMenuActionType, SongModel) -> Void)
     
     @State private var isLiked: Bool = false
@@ -315,8 +314,8 @@ struct SongItemView: View {
 }
 
 #Preview {
-//    SongsView()
-    SongItemView(song: song1, isLoading: .constant(false), menuAction: { _, _ in })
+    SongsView()
+//    SongItemView(song: song1, isLoading: .constant(false), menuAction: { _, _ in })
 }
 
 

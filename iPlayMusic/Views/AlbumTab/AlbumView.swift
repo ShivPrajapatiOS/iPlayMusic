@@ -10,10 +10,11 @@ import SkeletonUI
 
 struct AlbumView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .shared
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmAlbum: AlbumViewModel = .init()
+    @StateObject private var vmalbumRealm: AlbumRealmViewModel = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -43,9 +44,9 @@ struct AlbumView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newAlbums.enumerated()), id: \.element.id) { index, newAlbum in
                                         NavigationLink {
-                                            AlbumDetailsView(vmAlbum: vmAlbum, album: newAlbum)
+                                            AlbumDetailsView(album: newAlbum)
                                         } label: {
-                                            AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading)
+                                            AlbumItemView(album: newAlbum, isLoading: $vmNewRelease.isLoading, action: { albumMenuActionPerform($0, $1) })
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -54,9 +55,9 @@ struct AlbumView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmAlbum.albums.enumerated()), id: \.element.id) { index, album in
                                         NavigationLink {
-                                            AlbumDetailsView(vmAlbum: vmAlbum, album: album)
+                                            AlbumDetailsView(album: album)
                                         } label: {
-                                            AlbumItemView(album: album, isLoading: $vmAlbum.isLoading)
+                                            AlbumItemView(album: album, isLoading: $vmAlbum.isLoading, action: { albumMenuActionPerform($0, $1) })
                                                 .onAppear {
                                                     if index == vmAlbum.albums.count - 3 {
                                                         Task { await vmAlbum.loadMoreAlbums() }
@@ -85,13 +86,53 @@ struct AlbumView: View {
 #endif
         }
     }
+    
+    private func albumMenuActionPerform(_ type: AlbumItemMenuTypes, _ album: AlbumModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmalbumRealm.isLoading = true
+                    let likedAlbum = try await vmalbumRealm.toggleLikeAlbum(album: album)
+                    print(likedAlbum.toJSON())
+                    vmalbumRealm.errorMessage = nil
+                    vmalbumRealm.isLoading = false
+                    
+                    if likedAlbum.isLike {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updateAlbum(album: likedAlbum)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedAlbum)
+                } catch {
+                    vmalbumRealm.isLoading = false
+                    vmalbumRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Responsive Album Item View
+enum AlbumItemMenuTypes: String, CaseIterable {
+    case play, like
+    
+    var title: String {
+        switch self {
+        case .play: return "Play"
+        case .like: return "Like"
+        }
+    }
+}
 
 struct AlbumItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var vmAlbumRealm: AlbumRealmViewModel = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -102,7 +143,9 @@ struct AlbumItemView: View {
     
     let album: AlbumModel
     @Binding var isLoading: Bool
+    let action: ((AlbumItemMenuTypes, AlbumModel) -> Void)
     @State private var isHover: Bool = false
+    @State private var isLiked: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -119,7 +162,7 @@ struct AlbumItemView: View {
                 if isHover {
                     HStack {
                         Button {
-                            print("Play")
+                            action(.play, album)
                         } label: {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 14, weight: .semibold))
@@ -131,9 +174,10 @@ struct AlbumItemView: View {
                         Spacer(minLength: 12)
                         
                         Button {
-                            print("like")
+                            isLiked.toggle()
+                            action(.like, album)
                         } label: {
-                            Image(systemName: "heart.fill")
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
                                 .font(.system(size: 18, weight: .light))
                                 .frame(width: 32, height: 32)
                                 .foregroundStyle(
@@ -186,10 +230,12 @@ struct AlbumItemView: View {
                 self.isHover = hover
             }
         }
+        .onAppear {
+            isLiked = vmAlbumRealm.isAlbumLiked(albumId: album.id)
+        }
     }
 }
 
 #Preview {
     AlbumView()
-        .environmentObject(NewReleaseViewModel())
 }

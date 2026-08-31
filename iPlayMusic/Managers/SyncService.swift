@@ -37,17 +37,20 @@ class SyncService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        let (fetchedMyPlaylists, fetchedSongs) = try await FirebaseSyncManager.shared.fetchUserSyncData()
+        let (fetchedMyPlaylists, fetchedSongs, fetchedPlaylists, fetchedAlbums, fetchedArtists) = try await FirebaseSyncManager.shared.fetchUserSyncData()
         
         guard let realm = self.realm else { return }
         
         // 🔢 Total Count (FocusHistory include karo)
-        let totalItems = fetchedMyPlaylists.count + fetchedSongs.count
+        let totalItems = fetchedMyPlaylists.count + fetchedSongs.count + fetchedPlaylists.count + fetchedAlbums.count + fetchedArtists.count
         
         guard totalItems > 0 else {
             // 🔴 DELETE MISSING FIRST
             try deleteMissingObjects(ofType: MyPlaylistRealmModel.self, firebaseIDs: Set(fetchedMyPlaylists.map { $0._id }))
             try deleteMissingObjects(ofType: SongRealmModel.self, firebaseIDs: Set(fetchedSongs.map { $0._id }))
+            try deleteMissingObjects(ofType: PlaylistRealmModel.self, firebaseIDs: Set(fetchedPlaylists.map { $0._id }))
+            try deleteMissingObjects(ofType: AlbumRealmModel.self, firebaseIDs: Set(fetchedAlbums.map { $0._id }))
+            try deleteMissingObjects(ofType: ArtistRealmModel.self, firebaseIDs: Set(fetchedArtists.map { $0._id }))
             return
         }
         
@@ -67,9 +70,33 @@ class SyncService: ObservableObject {
         processedItems += fetchedSongs.count
         await updateProgressOnMain(processed: processedItems, total: totalItems)
         
+        // PLAYLISTS
+        try realm.write {
+            realm.add(fetchedPlaylists, update: .modified)
+        }
+        processedItems += fetchedPlaylists.count
+        await updateProgressOnMain(processed: processedItems, total: totalItems)
+        
+        // ALBUMS
+        try realm.write {
+            realm.add(fetchedAlbums, update: .modified)
+        }
+        processedItems += fetchedAlbums.count
+        await updateProgressOnMain(processed: processedItems, total: totalItems)
+        
+        // ARTISTS
+        try realm.write {
+            realm.add(fetchedArtists, update: .modified)
+        }
+        processedItems += fetchedArtists.count
+        await updateProgressOnMain(processed: processedItems, total: totalItems)
+        
         // 🔴 DELETE MISSING AFTER
         try deleteMissingObjects(ofType: MyPlaylistRealmModel.self, firebaseIDs: Set(fetchedMyPlaylists.map { $0._id }))
         try deleteMissingObjects(ofType: SongRealmModel.self, firebaseIDs: Set(fetchedSongs.map { $0._id }))
+        try deleteMissingObjects(ofType: PlaylistRealmModel.self, firebaseIDs: Set(fetchedPlaylists.map { $0._id }))
+        try deleteMissingObjects(ofType: AlbumRealmModel.self, firebaseIDs: Set(fetchedAlbums.map { $0._id }))
+        try deleteMissingObjects(ofType: ArtistRealmModel.self, firebaseIDs: Set(fetchedArtists.map { $0._id }))
         print("✅ Sync Complete")
     }
     

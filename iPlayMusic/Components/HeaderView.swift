@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+enum MyPlaylistMenuType {
+    case edit, play, shuffle, addToQueue, delete
+}
+
+#if os(macOS)
 struct HeaderView: View {
     @Environment(\.colorScheme) private var systemScheme
     
@@ -118,11 +123,6 @@ struct HeaderView: View {
                 .ignoresSafeArea()
         })
     }
-}
-
-
-enum MyPlaylistMenuType {
-    case edit, play, shuffle, addToQueue, delete
 }
 
 struct BackButtonHeaderView: View {
@@ -322,3 +322,36 @@ struct HeaderDetailsView: View {
 #Preview {
     HeaderView(selectedTab: .constant(.myPlaylists), title: "Artist", txtSearch: .constant(""), showCreatePlaylist: .constant(false))
 }
+#endif
+
+
+//  DetailScreenLifecycleModifier.swift
+
+#if os(macOS)
+struct DetailScreenLifecycleModifier: ViewModifier {
+    @StateObject private var appState: StateManager = .shared
+    @State private var hasEnteredDetail = false
+    
+    func body(content: Content) -> some View {
+        content
+            .onAppear {
+                if !hasEnteredDetail {
+                    hasEnteredDetail = true
+                    appState.pushDetailScreen()
+                }
+            }
+            .onDisappear {
+                if hasEnteredDetail {
+                    hasEnteredDetail = false
+                    appState.popDetailScreen()
+                }
+            }
+    }
+}
+
+extension View {
+    func trackDetailScreenLifecycle() -> some View {
+        modifier(DetailScreenLifecycleModifier())
+    }
+}
+#endif

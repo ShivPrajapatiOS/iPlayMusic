@@ -10,10 +10,11 @@ import SkeletonUI
 
 struct PlaylistView: View {
     @Environment(\.colorScheme) private var systemScheme
-    @EnvironmentObject var vmNewRelease: NewReleaseViewModel
+    @StateObject var vmNewRelease: NewReleaseViewModel = .shared
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmPlaylist: PlaylistViewModel = .init()
+    @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -43,9 +44,9 @@ struct PlaylistView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newPlaylists.enumerated()), id: \.element.id) { index, newPlaylist in
                                         NavigationLink {
-                                            PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: newPlaylist)
+                                            PlaylistDetailsView(playlist: newPlaylist)
                                         } label: {
-                                            PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading)
+                                            PlaylistItemView(playlist: newPlaylist, isLoading: $vmNewRelease.isLoading, action: { playlistMenuActionPerform($0, $1) })
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -54,9 +55,9 @@ struct PlaylistView: View {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmPlaylist.playlists.enumerated()), id: \.element.id) { index, playlist in
                                         NavigationLink {
-                                            PlaylistDetailsView(vmPlaylist: vmPlaylist, playlist: playlist)
+                                            PlaylistDetailsView(playlist: playlist)
                                         } label: {
-                                            PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading)
+                                            PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading, action: { playlistMenuActionPerform($0, $1) })
                                                 .onAppear {
                                                     if index == vmPlaylist.playlists.count - 3 {
                                                         Task { await vmPlaylist.loadMorePlaylists() }
@@ -85,13 +86,55 @@ struct PlaylistView: View {
 #endif
         }
     }
+    
+    private func playlistMenuActionPerform(_ type: PlaylistItemMenuTypes, _ playlist: PlaylistModel) {
+        switch type {
+        case .play:
+            print("Play")
+        case .like:
+            Task {
+                do {
+                    vmPlaylistRealm.isLoading = true
+                    let likedPlaylist = try await vmPlaylistRealm.toggleLikePlaylist(playlist: playlist)
+                    print(likedPlaylist.toJSON())
+                    vmPlaylistRealm.errorMessage = nil
+                    vmPlaylistRealm.isLoading = false
+                    
+                    if likedPlaylist.isLike {
+                        // Naya like → Realm me pehli baar tha to addSong, warna updateSong
+                        let tableReference = try await FirebaseSyncManager.shared.updatePlaylist(playlist: likedPlaylist)
+                        print("this Object isSynced: \(tableReference)")
+                    } else {
+                        let tableReference = try await FirebaseSyncManager.shared.updatePlaylist(playlist: likedPlaylist)
+                        print("this Object isSynced: \(tableReference)")
+                    }
+                    try await FirebaseSyncManager.shared.isSync(object: likedPlaylist)
+                } catch {
+                    vmPlaylistRealm.isLoading = false
+                    vmPlaylistRealm.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Responsive Playlist Item View
 
+enum PlaylistItemMenuTypes: String, CaseIterable {
+    case play, like
+    
+    var title: String {
+        switch self {
+        case .play: return "Play"
+        case .like: return "Like"
+        }
+    }
+}
+
 struct PlaylistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -102,7 +145,9 @@ struct PlaylistItemView: View {
     
     let playlist: PlaylistModel
     @Binding var isLoading: Bool
+    let action: ((PlaylistItemMenuTypes, PlaylistModel) -> Void)
     @State private var isHover: Bool = false
+    @State private var isLiked: Bool = false
 
     // Exact fractions measured from JioSaavn's CDN watermark position
     private let iconXFraction: CGFloat = 0.049
@@ -131,7 +176,7 @@ struct PlaylistItemView: View {
                 if isHover {
                     HStack {
                         Button {
-                            print("Play")
+                            action(.play, playlist)
                         } label: {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 14, weight: .semibold))
@@ -143,9 +188,10 @@ struct PlaylistItemView: View {
                         Spacer(minLength: 12)
                         
                         Button {
-                            print("like")
+                            isLiked.toggle()
+                            action(.like, playlist)
                         } label: {
-                            Image(systemName: "heart.fill")
+                            Image(systemName: isLiked ? "heart.fill" : "heart")
                                 .font(.system(size: 18, weight: .light))
                                 .frame(width: 32, height: 32)
                                 .foregroundStyle(
@@ -199,12 +245,14 @@ struct PlaylistItemView: View {
                 self.isHover = hover
             }
         }
+        .onAppear {
+            isLiked = vmPlaylistRealm.isPlaylistLiked(playlistId: playlist.id)
+        }
     }
 }
 
 #Preview {
     PlaylistView()
-        .environmentObject(NewReleaseViewModel())
 }
 
 

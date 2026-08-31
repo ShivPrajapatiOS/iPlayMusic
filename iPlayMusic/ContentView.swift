@@ -14,7 +14,7 @@ struct ContentView: View {
     @StateObject private var networkManager: NetworkManager = .init()
     @StateObject private var appState: StateManager = .shared
     @StateObject private var syncManager: SyncService = .init()
-    @StateObject private var vmNewRelease: NewReleaseViewModel = .init()
+    @StateObject private var vmNewRelease: NewReleaseViewModel = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -45,6 +45,7 @@ struct ContentView: View {
                             HomeView(isShowSearch: $isShowSearch, namespace: searchAnimation)
                         case .song:
                             SongsView()
+                                .environmentObject(networkManager)
                         case .artist:
                             Text("Artists")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -84,23 +85,18 @@ struct ContentView: View {
                                 SearchView()
                             case .home:
                                 HomeView()
-                                    .environmentObject(vmNewRelease)
                             case .radio:
                                 Text(selectedTab.title)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                             case .artists:
                                 ArtistView()
-                                    .environmentObject(vmNewRelease)
                             case .albums:
                                 AlbumView()
-                                    .environmentObject(vmNewRelease)
                             case .songs:
                                 SongsView()
-                                    .environmentObject(vmNewRelease)
                                     .environmentObject(networkManager)
                             case .playlists:
-                                PlaylistView()
-                                    .environmentObject(vmNewRelease)
+                                    PlaylistView()
                             case .myPlaylists:
                                 MyPlaylistsView()
                             }

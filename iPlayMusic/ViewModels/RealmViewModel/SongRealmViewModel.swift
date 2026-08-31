@@ -11,6 +11,9 @@ import RealmSwift
 import Realm
 
 class SongRealmViewModel: ObservableObject {
+    
+    static let shared: SongRealmViewModel = .init()
+    
     var realm: Realm?
     
     @Published var errorMessage: String? = nil
@@ -29,57 +32,41 @@ class SongRealmViewModel: ObservableObject {
     }
     
     func toggleLike(song: SongModel) async throws -> SongRealmModel {
-            guard let realm = self.realm else { throw RealmError.realmAccessFailed }
-            
-            // MARK: Case 1 — Song already Realm me hai → sirf flag toggle
-            if let existing = realm.objects(SongRealmModel.self).filter("song_id == %@", song.id).first {
-                do {
-                    try realm.write {
-                        existing.isLike.toggle()
-                        existing.isSync = false
-                        existing.updateAt = Date()
-                    }
-                    return existing.freeze()
-                } catch {
-                    throw RealmError.writeFailed(error.localizedDescription)
-                }
-            }
-            
-            // MARK: Case 2 — Naya song, pehli baar like ho raha hai
-            let newSong = mapToRealmSong(from: song)
-            newSong.isLike = true
-            newSong.isSync = false
-            
+        guard let realm = self.realm else { throw RealmError.realmAccessFailed }
+        
+        // MARK: Case 1 — Song already Realm me hai → sirf flag toggle
+        if let existing = realm.objects(SongRealmModel.self).filter("song_id == %@", song.id).first {
             do {
                 try realm.write {
-                    realm.add(newSong)
+                    existing.isLike.toggle()
+                    existing.isSync = false
+                    existing.updateAt = Date()
                 }
-                return newSong.freeze()
+                return existing.freeze()
             } catch {
                 throw RealmError.writeFailed(error.localizedDescription)
             }
         }
         
-        /// Kya diya gaya song currently liked hai — heart icon ka initial state set karne ke liye.
-        func isSongLiked(songId: String) -> Bool {
-            guard let realm = self.realm else { return false }
-            return realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first?.isLike ?? false
-        }
-    
-    func favoriteSong(song: SongModel) async throws -> SongRealmModel {
-        guard let realm = self.realm else { throw RealmError.realmAccessFailed }
-        let favoriteSong = mapToRealmSong(from: song)
+        // MARK: Case 2 — Naya song, pehli baar like ho raha hai
+        let newSong = mapToRealmSong(from: song)
+        newSong.isLike = true
+        newSong.isSync = false
         
         do {
             try realm.write {
-                realm.add(favoriteSong)
-                print("New MyPlaylist added: \(favoriteSong.name ?? "")")
+                realm.add(newSong)
             }
-            return favoriteSong
+            return newSong.freeze()
         } catch {
-            print("Error adding new MyPlaylist: \(error.localizedDescription)")
             throw RealmError.writeFailed(error.localizedDescription)
         }
+    }
+    
+    /// Kya diya gaya song currently liked hai — heart icon ka initial state set karne ke liye.
+    func isSongLiked(songId: String) -> Bool {
+        guard let realm = self.realm else { return false }
+        return realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first?.isLike ?? false
     }
 }
 
