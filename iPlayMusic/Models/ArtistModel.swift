@@ -23,6 +23,6 @@ struct ArtistModel: Decodable, Identifiable {
     let type: String?
     let url: String?
     var thumbnailURL: String? {
-        return image?.first(where: { $0.quality == .high })?.url
+        return image?.first(where: { $0.quality == .high || $0.quality == nil })?.url
     }
 }

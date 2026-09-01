@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import RealmSwift
+import Realm
 import SkeletonUI
 
 struct ArtistView: View {
@@ -28,6 +30,8 @@ struct ArtistView: View {
         [GridItem(.adaptive(minimum: 140, maximum: 200), spacing: 16)]
     }
     
+    @ObservedResults(ArtistRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoriteArtists: Results<ArtistRealmModel>
+    
     var body: some View {
         NavigationStack {
 #if !os(macOS)
@@ -37,10 +41,26 @@ struct ArtistView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
             ZStack {
-                if ((!vmArtist.artists.isEmpty) || (!vmNewRelease.newArtists.isEmpty)) {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 0) {
-                            if vmArtist.artists.isEmpty {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        if !vmArtist.artists.isEmpty {
+                            LazyVGrid(columns: gridColumns, spacing: 20) {
+                                ForEach(Array(vmArtist.artists.enumerated()), id: \.element.id) { index, artist in
+                                    NavigationLink {
+                                        ArtistDetailsView(artist: artist)
+                                    } label: {
+                                        ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading, action: { artistMenuActionPerform($0, $1) })
+                                            .onAppear {
+                                                if index == vmArtist.artists.count - 3 {
+                                                    Task { await vmArtist.loadMoreArtists() }
+                                                }
+                                            }
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        } else {
+                            if !vmNewRelease.newArtists.isEmpty {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newArtists.enumerated()), id: \.element.id) { index, newArtist in
                                         NavigationLink {
@@ -51,40 +71,62 @@ struct ArtistView: View {
                                         .buttonStyle(.plain)
                                     }
                                 }
-                            } else {
-                                LazyVGrid(columns: gridColumns, spacing: 20) {
-                                    ForEach(Array(vmArtist.artists.enumerated()), id: \.element.id) { index, artist in
-                                        NavigationLink {
-                                            ArtistDetailsView(artist: artist)
-                                        } label: {
-                                            ArtistItemView(artist: artist, isLoading: $vmArtist.isLoading, action: { artistMenuActionPerform($0, $1) })
-                                                .onAppear {
-                                                    if index == vmArtist.artists.count - 3 {
-                                                        Task { await vmArtist.loadMoreArtists() }
-                                                    }
-                                                }
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                }
                             }
                             
+                            if !favoriteArtists.isEmpty {
+                                VStack {
+                                    Text("Favorite Artist 😘")
+                                        .font(.system(size: 20, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    LazyVGrid(columns: gridColumns, spacing: 20) {
+                                        ForEach(favoriteArtists, id: \._id) { favorArtist in
+                                            if let artistObj = convertArtistRealmToArtistModel(artist: favorArtist) {
+                                                NavigationLink {
+                                                    ArtistDetailsView(artist: artistObj)
+                                                } label: {
+                                                    ArtistItemView(artist: artistObj, isLoading: .constant(false), action: { artistMenuActionPerform($0, $1) })
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.top, 20)
+                            }
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom)
                     }
-                } else {
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+                
+                if vmArtist.artists.isEmpty && favoriteArtists.isEmpty && vmNewRelease.newArtists.isEmpty {
                     EmptyDataView(icon: "music.microphone", title: "No Artist Found", subTitle: "Search for a artists to start listening.")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.artists] ?? "") { _, newValue in
-                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    if !vmArtist.artists.isEmpty {
+                        vmArtist.artists.removeAll()
+                    }
+                    return
+                }
                 Task {
                     await vmArtist.searchArtists(query: newValue)
                 }
             }
 #endif
+        }
+    }
+    
+    private func convertArtistRealmToArtistModel(artist: ArtistRealmModel) -> ArtistModel? {
+        do {
+            return try artist.toArtistModel()
+        } catch {
+            return nil
         }
     }
     

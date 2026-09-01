@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import RealmSwift
+import Realm
 import SkeletonUI
 
 struct AlbumView: View {
@@ -28,6 +30,8 @@ struct AlbumView: View {
         [GridItem(.adaptive(minimum: 140, maximum: 200), spacing: 16)]
     }
     
+    @ObservedResults(AlbumRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoriteAlbums: Results<AlbumRealmModel>
+    
     var body: some View {
         NavigationStack {
 #if !os(macOS)
@@ -37,10 +41,26 @@ struct AlbumView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
             ZStack {
-                if ((!vmAlbum.albums.isEmpty) || (!vmNewRelease.newAlbums.isEmpty)) {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 0) {
-                            if vmAlbum.albums.isEmpty {
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 0) {
+                        if !vmAlbum.albums.isEmpty {
+                            LazyVGrid(columns: gridColumns, spacing: 20) {
+                                ForEach(Array(vmAlbum.albums.enumerated()), id: \.element.id) { index, album in
+                                    NavigationLink {
+                                        AlbumDetailsView(album: album)
+                                    } label: {
+                                        AlbumItemView(album: album, isLoading: $vmAlbum.isLoading, action: { albumMenuActionPerform($0, $1) })
+                                            .onAppear {
+                                                if index == vmAlbum.albums.count - 3 {
+                                                    Task { await vmAlbum.loadMoreAlbums() }
+                                                }
+                                            }
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        } else {
+                            if !vmNewRelease.newAlbums.isEmpty {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newAlbums.enumerated()), id: \.element.id) { index, newAlbum in
                                         NavigationLink {
@@ -51,39 +71,62 @@ struct AlbumView: View {
                                         .buttonStyle(.plain)
                                     }
                                 }
-                            } else {
-                                LazyVGrid(columns: gridColumns, spacing: 20) {
-                                    ForEach(Array(vmAlbum.albums.enumerated()), id: \.element.id) { index, album in
-                                        NavigationLink {
-                                            AlbumDetailsView(album: album)
-                                        } label: {
-                                            AlbumItemView(album: album, isLoading: $vmAlbum.isLoading, action: { albumMenuActionPerform($0, $1) })
-                                                .onAppear {
-                                                    if index == vmAlbum.albums.count - 3 {
-                                                        Task { await vmAlbum.loadMoreAlbums() }
-                                                    }
+                            }
+                            
+                            if !favoriteAlbums.isEmpty {
+                                VStack {
+                                    Text("Favorite Albums 😘")
+                                        .font(.system(size: 20, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    LazyVGrid(columns: gridColumns, spacing: 20) {
+                                        ForEach(favoriteAlbums, id: \._id) { favorAlbum in
+                                            if let albumObj = convertAlbumRealmToAlbumModel(album: favorAlbum) {
+                                                NavigationLink {
+                                                    AlbumDetailsView(album: albumObj)
+                                                } label: {
+                                                    AlbumItemView(album: albumObj, isLoading: .constant(false), action: { albumMenuActionPerform($0, $1) })
                                                 }
+                                                .buttonStyle(.plain)
+                                            }
                                         }
-                                        .buttonStyle(.plain)
                                     }
                                 }
+                                .padding(.top, 20)
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom)
                     }
-                } else {
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+                
+                if vmAlbum.albums.isEmpty && vmNewRelease.newAlbums.isEmpty && favoriteAlbums.isEmpty {
                     EmptyDataView(icon: "music.note.square.stack", title: "No Album Found", subTitle: "Search for a album to start listening.")
                 }
-        }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.albums] ?? "") { _, newValue in
-                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    if !vmAlbum.albums.isEmpty {
+                        vmAlbum.albums.removeAll()
+                    }
+                    return
+                }
                 Task {
                     await vmAlbum.searchAlbums(query: newValue)
                 }
             }
 #endif
+        }
+    }
+    
+    private func convertAlbumRealmToAlbumModel(album: AlbumRealmModel) -> AlbumModel? {
+        do {
+            return try album.toAlbumModel()
+        } catch {
+            print("❌ Album conversion error:", error)
+            return nil
         }
     }
     

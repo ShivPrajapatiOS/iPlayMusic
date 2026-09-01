@@ -268,6 +268,25 @@ class PlaylistRealmModel: Object, ObjectKeyIdentifiable {
             "isLike": isLike,
         ]
     }
+    
+    func toPlaylistModel() throws -> PlaylistModel {
+        
+        var json = self.toJSON()
+        
+        // Realm → PlaylistModel
+        json["id"] = json["playlist_id"]
+        json.removeValue(forKey: "playlist_id")
+        
+        json["downloadUrl"] = json["downloadURL"]
+        json.removeValue(forKey: "downloadURL")
+        
+        if let image = json["image"] as? [String: Any] {
+            json["image"] = [image]
+        }
+        
+        let model = try json.decode(PlaylistModel.self)
+        return model
+    }
 }
 
 // MARK: - AlbumRealmModel
@@ -314,6 +333,52 @@ class AlbumRealmModel: Object, ObjectKeyIdentifiable {
             
         ]
     }
+    
+    func toAlbumModel() throws -> AlbumModel {
+
+        var json = self.toJSON()
+
+        // Realm album_id -> API id
+        json["id"] = json["album_id"]
+        json.removeValue(forKey: "album_id")
+
+        // Image: Realm Object -> Array
+        if let image = json["image"] as? [String: Any] {
+            json["image"] = [image]
+        }
+
+        // Artists: Array -> AlbumArtistModel structure
+        if let artists = json["artists"] as? [[String: Any]] {
+
+            let normalizedArtists = artists.map { artist -> [String: Any] in
+
+                var artist = artist
+
+                // Realm mein image single object hai,
+                // AlbumArtistMini mein image array hai.
+                if let image = artist["image"] as? [String: Any] {
+                    artist["image"] = [image]
+                }
+
+                return artist
+            }
+
+            let primary = normalizedArtists.filter {
+                ($0["role"] as? String)?.lowercased() == "primary"
+            }
+
+            let featured = normalizedArtists.filter {
+                ($0["role"] as? String)?.lowercased() == "featured"
+            }
+
+            json["artists"] = [
+                "primary": primary,
+                "featured": featured,
+                "all": normalizedArtists
+            ]
+        }
+        return try json.decode(AlbumModel.self)
+    }
 }
 
 
@@ -347,5 +412,24 @@ class ArtistRealmModel: Object, ObjectKeyIdentifiable {
             "updateAt": updateAt.timeIntervalSince1970,
             "isLike": isLike
         ]
+    }
+    
+    func toArtistModel() throws -> ArtistModel {
+        
+        var json = self.toJSON()
+        
+        // Realm → ArtistModel
+        json["id"] = json["artist_id"]
+        json.removeValue(forKey: "artist_id")
+        
+        json["downloadUrl"] = json["downloadURL"]
+        json.removeValue(forKey: "downloadURL")
+        
+        if let image = json["image"] as? [String: Any] {
+            json["image"] = [image]
+        }
+        
+        let model = try json.decode(ArtistModel.self)
+        return model
     }
 }

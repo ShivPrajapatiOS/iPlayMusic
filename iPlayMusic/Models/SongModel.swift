@@ -34,7 +34,7 @@ struct SongModel: Decodable, Identifiable {
     let artists: SongArtistModel?
     let image: [ImageQuality]?
     let downloadUrl: [DownloadUrl]?
-    var thumbnailURL: String? { return image?.first(where: { $0.quality == .high })?.url }
+    var thumbnailURL: String? { return image?.first(where: { $0.quality == .high || $0.quality == nil })?.url }
     var streamingURL: String? { return downloadUrl?.first(where: { $0.quality == .kbps320 })?.url }
 }
 

@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import RealmSwift
+import Realm
 import SkeletonUI
 
 struct PlaylistView: View {
@@ -28,6 +30,8 @@ struct PlaylistView: View {
         [GridItem(.adaptive(minimum: 140, maximum: 200), spacing: 16)]
     }
     
+    @ObservedResults(PlaylistRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoritePlaylists: Results<PlaylistRealmModel>
+    
     var body: some View {
         NavigationStack {
 #if !os(macOS)
@@ -37,10 +41,26 @@ struct PlaylistView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 #else
             ZStack {
-                if ((!vmPlaylist.playlists.isEmpty) || (!vmNewRelease.newPlaylists.isEmpty)) {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 0) {
-                            if vmPlaylist.playlists.isEmpty {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        if !vmPlaylist.playlists.isEmpty {
+                            LazyVGrid(columns: gridColumns, spacing: 20) {
+                                ForEach(Array(vmPlaylist.playlists.enumerated()), id: \.element.id) { index, playlist in
+                                    NavigationLink {
+                                        PlaylistDetailsView(playlist: playlist)
+                                    } label: {
+                                        PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading, action: { playlistMenuActionPerform($0, $1) })
+                                            .onAppear {
+                                                if index == vmPlaylist.playlists.count - 3 {
+                                                    Task { await vmPlaylist.loadMorePlaylists() }
+                                                }
+                                            }
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        } else {
+                            if !vmNewRelease.newPlaylists.isEmpty {
                                 LazyVGrid(columns: gridColumns, spacing: 20) {
                                     ForEach(Array(vmNewRelease.newPlaylists.enumerated()), id: \.element.id) { index, newPlaylist in
                                         NavigationLink {
@@ -51,39 +71,62 @@ struct PlaylistView: View {
                                         .buttonStyle(.plain)
                                     }
                                 }
-                            } else {
-                                LazyVGrid(columns: gridColumns, spacing: 20) {
-                                    ForEach(Array(vmPlaylist.playlists.enumerated()), id: \.element.id) { index, playlist in
-                                        NavigationLink {
-                                            PlaylistDetailsView(playlist: playlist)
-                                        } label: {
-                                            PlaylistItemView(playlist: playlist, isLoading: $vmPlaylist.isLoading, action: { playlistMenuActionPerform($0, $1) })
-                                                .onAppear {
-                                                    if index == vmPlaylist.playlists.count - 3 {
-                                                        Task { await vmPlaylist.loadMorePlaylists() }
-                                                    }
+                            }
+                            
+                            if !favoritePlaylists.isEmpty {
+                                VStack {
+                                    Text("Favorite Liked 😘")
+                                        .font(.system(size: 20, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    LazyVGrid(columns: gridColumns, spacing: 20) {
+                                        ForEach(favoritePlaylists, id: \._id) { favorPlaylist in
+                                            if let playlistObj = convertPlaylistRealmToPlaylistModel(playlist: favorPlaylist) {
+                                                NavigationLink {
+                                                    PlaylistDetailsView(playlist: playlistObj)
+                                                } label: {
+                                                    PlaylistItemView(playlist: playlistObj, isLoading: .constant(false), action: { playlistMenuActionPerform($0, $1) })
                                                 }
+                                                .buttonStyle(.plain)
+                                            }
                                         }
-                                        .buttonStyle(.plain)
                                     }
                                 }
+                                .padding(.top, 20)
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom)
                     }
-                } else {
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+                
+                if vmPlaylist.playlists.isEmpty && vmNewRelease.newPlaylists.isEmpty && favoritePlaylists.isEmpty {
                     EmptyDataView(icon: "music.note.list", title: "No Playlist Found", subTitle: "Search for a playlist to start listening.")
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.playlists] ?? "") { _, newValue in
-                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    if !vmPlaylist.playlists.isEmpty {
+                        vmPlaylist.playlists.removeAll()
+                    }
+                    return
+                }
                 Task {
                     await vmPlaylist.searchPlaylists(query: newValue)
                 }
             }
 #endif
+        }
+    }
+    
+    private func convertPlaylistRealmToPlaylistModel(playlist: PlaylistRealmModel) -> PlaylistModel? {
+        do {
+            return try playlist.toPlaylistModel()
+        } catch {
+            return nil
         }
     }
     
