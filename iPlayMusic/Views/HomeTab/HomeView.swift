@@ -15,6 +15,7 @@ struct HomeView: View {
     @StateObject private var vmAlbumRealm: AlbumRealmViewModel = .shared
     @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
     @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -87,13 +88,11 @@ struct HomeView: View {
                                     .foregroundStyle(theme.subText(isDark: isDark))
                                     .frame(height: 45)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
+                                ForEach(Array(vmNewRelease.newSongs.enumerated()), id: \.element.id) { (index, newSong) in
                                     SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                         .frame(height: 55)
                                         .onTapGesture {
-                                            //                                            Task {
-                                            //                                                await vmSuggestionSong.getSuggestion(songId: newSong.id)
-                                            //                                            }
+                                            player.setupPlay(songs: vmNewRelease.newSongs, playIndex: index)
                                         }
                                 }
                             }
@@ -173,6 +172,14 @@ struct HomeView: View {
                                     .padding(.horizontal)
                                 }
                             }
+                        }
+                        if vmNewRelease.newReleases.isEmpty {
+                            ContentUnavailableView(
+                                "No yet",
+                                systemImage: "music.microphone",
+                                description: Text("Search for a song, artist or album or playlist to start listening.")
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         }
                     }
                     .padding(.bottom)

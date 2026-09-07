@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import VLCKit
 
 struct MiniPlayerView: View {
     @Environment(\.colorScheme) private var systemScheme
-
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var player: PlayerManager = .shared
+    @StateObject private var appState: StateManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -25,26 +27,29 @@ struct MiniPlayerView: View {
     @State private var showEqualizer: Bool = false
     @State private var isValume: Bool = false
     
-    @State private var seekProgress: Float = 0.25
-    
+    private var isPlayerInactive: Bool {
+            player.currentSong == nil && player.state == .stopped
+        }
+        
     var body: some View {
         ZStack {
             HStack(spacing: 16) {
                 HStack {
                     Button {
-                        print("")
+                        player.isShuffle.toggle()
                     } label: {
                         Image(systemName: "shuffle")
                             .font(.system(size: 11, weight: .light, design: .default))
+                            .foregroundStyle(player.isShuffle ? theme.theme.primary : theme.text(isDark: isDark))
                             .scaledToFit()
                             .frame(height: 25)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                     Button {
-                        print("")
+                        player.previousPlay()
                     } label: {
                         Image(systemName: "backward.fill")
                             .font(.system(size: 13, weight: .light, design: .default))
@@ -52,25 +57,25 @@ struct MiniPlayerView: View {
                             .frame(height: 30)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                     
                     Button {
-                        print("")
+                        player.playPause()
                     } label: {
-                        Image(systemName: "play.fill")
+                        Image(systemName: player.state == .playing ? "pause.fill" : "play.fill")
                             .font(.system(size: 20, weight: .light, design: .default))
                             .scaledToFit()
                             .frame(width: 35, height: 35)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                     
                     Button {
-                        print("")
+                        player.nextPlay()
                     } label: {
                         Image(systemName: "forward.fill")
                             .font(.system(size: 13, weight: .light, design: .default))
@@ -78,74 +83,70 @@ struct MiniPlayerView: View {
                             .frame(height: 30)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                     
                     Button {
-                        print("")
+                        switch player.repeatMode {
+                        case .doNotRepeat:
+                            player.repeatMode = .repeatAllItems
+                        case .repeatAllItems:
+                            player.repeatMode = .repeatCurrentItem
+                        case .repeatCurrentItem:
+                            player.repeatMode = .doNotRepeat
+                        @unknown default: break;
+                        }
                     } label: {
-                        Image(systemName: "repeat")
+                        Image(systemName: player.repeatMode == .repeatCurrentItem ? "repeat.1" : "repeat")
                             .font(.system(size: 11, weight: .light, design: .default))
+                            .foregroundStyle(player.repeatMode == .doNotRepeat ? theme.text(isDark: isDark) : theme.theme.primary)
                             .scaledToFit()
                             .frame(height: 25)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                 }
-                .matchedGeometryEffect(
-                            id: "PLAYER_CONTROLS",
-                            in: namespace
-                        )
+                .matchedGeometryEffect(id: "PLAYER_CONTROLS", in: namespace, isSource: !appState.showFullPlayer)
                 HStack {
-                    RoundedRectangleWebImageView(url: nil)
+                    RoundedRectangleWebImageView(url: URL(string: player.currentSong?.thumbnailURL ?? ""))
                         .frame(width: 32.5, height: 32.5)
-                        .matchedGeometryEffect(
-                                id: "PLAYER_ARTWORK",
-                                in: namespace
-                            )
+                        .matchedGeometryEffect(id: "PLAYER_ARTWORK", in: namespace, isSource: !appState.showFullPlayer)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Naresh Narayan - Aaja Ve Mahiya (Unforgettable) Lo-Fi Flip ft. Imran Khan")
+                        Text(player.currentSong?.name ?? "Unknown")
                             .font(.system(size: 12, weight: .semibold, design: .default))
                             .foregroundStyle(theme.text(isDark: isDark))
-                            .matchedGeometryEffect(
-                                    id: "PLAYER_TITLE",
-                                    in: namespace
-                                )
-                        Text("Mubeen Butt")
+                            .matchedGeometryEffect(id: "PLAYER_TITLE", in: namespace, isSource: !appState.showFullPlayer)
+                        Text(player.currentSong?.artists?.all?.compactMap { $0.name }.joined(separator: ", ") ?? "Unknown")
                             .font(.system(size: 10, weight: .light, design: .default))
                             .foregroundStyle(theme.subText(isDark: isDark))
-                            .matchedGeometryEffect(
-                                    id: "PLAYER_ARTIST",
-                                    in: namespace
-                                )
+                            .matchedGeometryEffect(id: "PLAYER_ARTIST", in: namespace, isSource: !appState.showFullPlayer)
                     }
                     .lineLimit(1)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .blur(radius: showSeek ? 2.5 : 0)
                 .opacity(showSeek ? 0.9 : 1)
                 .overlay(alignment: .bottom, content: {
                     VStack {
                         if showSeek {
                             HStack {
-                                Text("02:00")
+                                Text(player.currentDuration.stringValue)
                                 Spacer()
-                                Text("05:00")
+                                Text(player.totalDuration.stringValue)
                             }
                             .font(.system(size: 11, weight: .light, design: .default))
                             .foregroundStyle(theme.text(isDark: isDark))
                             .padding(.horizontal, 2.5)
                         }
-                        MacOSHorizontalSlider(progress: $seekProgress, isHover: $showSeek)
+                        MacOSHorizontalSlider(progress: $player.position, isHover: $showSeek) { (progress, isTracking) in
+                            player.seek(to: progress, isTracking: isTracking)
+                        }
                     }
                     .padding(.bottom, 2.5)
-                    .matchedGeometryEffect(
-                                id: "PLAYER_SEEK_SLIDER",
-                                in: namespace
-                            )
+                    .matchedGeometryEffect(id: "PLAYER_SEEK_SLIDER", in: namespace, isSource: !appState.showFullPlayer)
                     .onHover { isHover in
                         withAnimation(.bouncy) {
                             showSeek.toggle()
@@ -164,7 +165,7 @@ struct MiniPlayerView: View {
                                 .frame(width: 25, height: 35)
                                 .background {
                                     Capsule()
-                                        .fill(theme.background(isDark: isDark))
+                                        .fill(theme.background(isDark: isDark).opacity(0.0000001))
                                 }
                         }
                         
@@ -180,7 +181,7 @@ struct MiniPlayerView: View {
                                 .frame(width: 25, height: 35)
                                 .background {
                                     Capsule()
-                                        .fill(theme.background(isDark: isDark))
+                                        .fill(theme.background(isDark: isDark).opacity(0.0000001))
                                 }
                         }
                         
@@ -196,7 +197,7 @@ struct MiniPlayerView: View {
                                 .frame(width: 25, height: 35)
                                 .background {
                                     Capsule()
-                                        .fill(theme.background(isDark: isDark))
+                                        .fill(theme.background(isDark: isDark).opacity(0.0000001))
                                 }
                         }
                         .popover(isPresented: $showEqualizer) {
@@ -205,7 +206,7 @@ struct MiniPlayerView: View {
                             .frame(width: 400, height: 250)
                         }
                     } else {
-                        MacOSHorizontalSlider(progress: $seekProgress, isHover: .constant(true))
+                        MacOSHorizontalSlider(progress: .constant(0.5), isHover: .constant(true))
                             .frame(width: 91)
                     }
                     
@@ -221,7 +222,7 @@ struct MiniPlayerView: View {
                             .frame(width: 25, height: 35)
                             .background {
                                 Capsule()
-                                    .fill(theme.background(isDark: isDark))
+                                    .fill(theme.background(isDark: isDark).opacity(0.0000001))
                             }
                     }
                 }
@@ -230,7 +231,7 @@ struct MiniPlayerView: View {
             .frame(height: 45)
             .frame(maxWidth: 575, alignment: .leading)
             .padding(.horizontal)
-            .background {
+            .background(content: {
                 Capsule()
                     .fill(theme.background(isDark: isDark))
                     .overlay(content: {
@@ -238,18 +239,17 @@ struct MiniPlayerView: View {
                             .stroke(theme.border(isDark: isDark), lineWidth: 1)
                     })
                     .shadow(color: theme.border(isDark: isDark).opacity(0.5), radius: 10, x: 0, y: 0)
-                    .matchedGeometryEffect(
-                                id: "PLAYER_BACKGROUND",
-                                in: namespace
-                            )
-            }
+                    .matchedGeometryEffect(id: "PLAYER_BACKGROUND", in: namespace, isSource: !appState.showFullPlayer)
+            })
+            .containerShape(Rectangle())
             .onTapGesture {
-                withAnimation(.spring(response: 0.55,
-                                      dampingFraction: 0.88)) {
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.88)) {
                     StateManager.shared.showFullPlayer = true
                 }
             }
         }
+        .opacity(isPlayerInactive ? 0.5 : 1.0)
+        .allowsHitTesting(!isPlayerInactive)
         .padding(.bottom, 25)
     }
 }

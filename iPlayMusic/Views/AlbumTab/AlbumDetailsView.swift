@@ -65,7 +65,8 @@ struct AlbumDetailsView: View {
                                     .skeleton(active: vmAlbum.isLoading)
                                 HStack {
                                     Button {
-                                        print("play")
+                                        guard let albumPlayback = vmAlbum.albumDetails else { return }
+                                        PlayerManager.shared.setupPlay(songs: albumPlayback.songs ?? [], playIndex: 0, source: .album(albumPlayback))
                                     } label: {
                                         HStack {
                                             Image(systemName: "play.fill")
@@ -90,9 +91,13 @@ struct AlbumDetailsView: View {
                         .padding(.horizontal)
                         VStack(spacing: 15) {
                             LazyVStack {
-                                ForEach(vmAlbum.albumDetails?.songs ?? [], id: \.id) { song in
+                                ForEach(Array((vmAlbum.albumDetails?.songs ?? []).enumerated()), id: \.element.id) { (index, song) in
                                     SongItemView(song: song, isLoading: $vmAlbum.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                         .frame(height: 55)
+                                        .onTapGesture {
+                                            guard let albumPlayback = vmAlbum.albumDetails else { return }
+                                            PlayerManager.shared.setupPlay(songs: albumPlayback.songs ?? [], playIndex: index, source: .album(albumPlayback))
+                                        }
                                 }
                             }
                             .padding(.horizontal)

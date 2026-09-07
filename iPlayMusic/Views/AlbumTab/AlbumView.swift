@@ -102,7 +102,11 @@ struct AlbumView: View {
                 }
                 
                 if vmAlbum.albums.isEmpty && vmNewRelease.newAlbums.isEmpty && favoriteAlbums.isEmpty {
-                    EmptyDataView(icon: "music.note.square.stack", title: "No Album Found", subTitle: "Search for a album to start listening.")
+                    ContentUnavailableView(
+                        "No Album",
+                        systemImage: "music.note.square.stack",
+                        description: Text("Search for a album to start listening.")
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -176,6 +180,7 @@ struct AlbumItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var vmAlbumRealm: AlbumRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -201,6 +206,14 @@ struct AlbumItemView: View {
             .aspectRatio(1, contentMode: .fit)
             .skeleton(active: isLoading)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(alignment: .topTrailing, content: {
+                if isCurrentlyPlaying(id: album.id) {
+                    LineVisualizerView()
+                        .padding(5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(theme.border(isDark: isDark)))
+                        .padding(.init(top: 15, leading: 0, bottom: 0, trailing: 15))
+                }
+            })
             .overlay(alignment: .bottom) {
                 if isHover {
                     HStack {
@@ -276,6 +289,10 @@ struct AlbumItemView: View {
         .onAppear {
             isLiked = vmAlbumRealm.isAlbumLiked(albumId: album.id)
         }
+    }
+    
+    private func isCurrentlyPlaying(id: String) -> Bool {
+        return player.currentPlaybackSource.id == id
     }
 }
 

@@ -1,5 +1,5 @@
 {
-  "originHash" : "2a747ebc5ea5a879dc7308782baab89961d2fea17b951d2471a809ea3afc6a75",
+  "originHash" : "e218dbb5155c73b31bfd5c64065d490f04b9e99c16a0047d3a1b9089c072c4eb",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -188,6 +188,15 @@
       "state" : {
         "revision" : "fb627aa59a03dc1ba21b8a1ada1bc671df0b1735",
         "version" : "1.0.5"
+      }
+    },
+    {
+      "identity" : "vlckit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://code.videolan.org/videolan/VLCKit.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "2bb6c74bf885a08e4cde7c602f7779e914c276ac"
       }
     }
   ],

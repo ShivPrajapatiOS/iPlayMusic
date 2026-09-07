@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 struct ContentView: View {
     @Environment(\.colorScheme) private var systemScheme
@@ -31,6 +34,9 @@ struct ContentView: View {
     @Namespace private var playerAnimation
     @State private var selectedTab: SideTabBar = .home
     @State private var showCreatePlaylist: Bool = false
+    @State private var queueWidth: CGFloat = 270
+    @State private var queueDragStartWidth: CGFloat = 270
+    @State private var isDraggingQueue: Bool = false
 #endif
     
     var body: some View {
@@ -118,9 +124,47 @@ struct ContentView: View {
                             .opacity(appState.showFullPlayer ? 0 : 1)
                             .padding(.horizontal)
                     }
-                    QueueListPlayView(isShow: $appState.showQueuePlaylist)
-                        .frame(maxHeight: .infinity)
-                        .frame(width: appState.showQueuePlaylist ? 270 : 0)
+                    ZStack(alignment: .leading) {
+                        QueueListPlayView(isShow: $appState.showQueuePlaylist)
+                            .frame(maxHeight: .infinity)
+                            .frame(width: appState.showQueuePlaylist ? queueWidth : 0)
+                            .animation(.interactiveSpring(response: 0.15, dampingFraction: 0.86), value: queueWidth)
+                        if appState.showQueuePlaylist {
+                            Color.clear
+                                .frame(width: 6)
+                                .contentShape(Rectangle())
+                                .onHover { hovering in
+                                    if hovering {
+                                        NSCursor.resizeLeftRight.set()
+                                    } else {
+                                        NSCursor.arrow.set()
+                                    }
+                                }
+                                .gesture(
+                                    DragGesture(minimumDistance: 1)
+                                        .onChanged { value in
+                                            if !isDraggingQueue {
+                                                isDraggingQueue = true
+                                                NSCursor.resizeLeftRight.set()
+                                            }
+                                            let newWidth = queueDragStartWidth - value.translation.width
+                                            queueWidth = min(max(newWidth, 0), 500)
+                                        }
+                                        .onEnded { _ in
+                                            isDraggingQueue = false
+                                            NSCursor.arrow.set()
+                                            if queueWidth < 100 {
+                                                withAnimation(.easeInOut) {
+                                                    appState.showQueuePlaylist = false
+                                                    queueWidth = 270
+                                                }
+                                            } else {
+                                                queueDragStartWidth = queueWidth
+                                            }
+                                        }
+                                )
+                        }
+                    }
                 }
                 if appState.showFullPlayer {
                     MusicPlayerView(showQueuePlaylist: $appState.showQueuePlaylist, namespace: playerAnimation)

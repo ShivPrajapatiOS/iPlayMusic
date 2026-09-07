@@ -14,7 +14,21 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "9AFE5E86",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.iplay.iplaymusic.equalizer.lifetime",
+      "referenceName" : "Equalizer",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_askToBuyEnabled" : false,

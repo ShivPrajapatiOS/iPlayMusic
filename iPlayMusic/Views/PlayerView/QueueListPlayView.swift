@@ -10,6 +10,8 @@ import SwiftUI
 struct QueueListPlayView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    
+    @StateObject private var player: PlayerManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -24,41 +26,26 @@ struct QueueListPlayView: View {
         ZStack {
             theme.background(isDark: isDark)
                 .ignoresSafeArea()
-            
             ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack {
-                    ForEach(0...50, id: \.self) { index in
-                        QueueItemView()
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(player.queueSongsList.enumerated()), id: \.element.id) { (index, song) in
+                        QueueItemView(song: song)
                             .frame(height: 50)
+                            .overlay(alignment: .bottom, content: {
+                                if player.queueSongsList.last?.id != song.id {
+                                    theme.border(isDark: isDark).opacity(0.25)
+                                        .frame(height: 1)
+                                }
+                            })
+                            .onTapGesture {
+                                player.playFromPlaylist(index: index)
+                            }
                     }
                 }
+                .padding(.vertical, isShow ? 12 : 0)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .top) {
-            if isShow {
-                HStack {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .light))
-                        .foregroundColor(theme.text(isDark: isDark))
-                        .frame(width: 32.5, height: 32.5)
-                        .background(
-                            Capsule()
-                                .fill(theme.background(isDark: isDark)).overlay(
-                                    Capsule()
-                                        .stroke(theme.border(isDark: isDark), lineWidth: 1)
-                                ))
-                        .onTapGesture {
-                            withAnimation(.easeInOut) {
-                                isShow.toggle()
-                            }
-                        }
-                }
-                .frame(maxWidth: .infinity, minHeight: 32.5, alignment: .leading)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 10)
-            }
-        }
         .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
         .containerShape(Rectangle())
     }

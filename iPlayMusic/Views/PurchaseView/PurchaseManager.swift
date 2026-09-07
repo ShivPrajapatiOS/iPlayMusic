@@ -15,6 +15,7 @@ class PurchaseManager: ObservableObject {
         
     @Published var availableProducts: [Product] = []
     
+    
     @Published var isLoading: Bool = false
     
     init() {
@@ -38,6 +39,13 @@ class PurchaseManager: ObservableObject {
         } catch {
             print("Failed to fetch products: \(error.localizedDescription)")
         }
+    }
+    
+    func fetchEqualizerProduct() async throws -> Product {
+        guard let product = try await Product.products(for: [AppConstants.EQUALIZER_LIFETIME_ID]).first else {
+            throw SKError(_nsError: .init(domain: "Failed to fetch equalizer product", code: 0))
+        }
+        return product
     }
     
     // Purchase Product

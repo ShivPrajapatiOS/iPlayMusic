@@ -500,6 +500,8 @@ extension FirebaseSyncManager {
         song.isSync = dict["isSync"] as? Bool ?? false
         song.isDeleted = dict["isDeleted"] as? Bool ?? false
         song.isLike = dict["isLike"] as? Bool ?? false
+        song.isDownloaded = dict["isDownloaded"] as? Bool ?? false
+        song.localAudioFileName = dict["localAudioFileName"] as? String
         
         if let imageDict = dict["image"] as? [String: Any] {
             let image = ImageQualityRealmModel()

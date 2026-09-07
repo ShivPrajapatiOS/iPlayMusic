@@ -115,6 +115,7 @@ class SongRealmModel: Object, ObjectKeyIdentifiable {
             "isSync": true,
             "isDeleted": isDeleted,
             "isDownloaded": isDownloaded,
+            "localAudioFileName": localAudioFileName ?? NSNull(),
             "isLike": isLike,
         ]
     }

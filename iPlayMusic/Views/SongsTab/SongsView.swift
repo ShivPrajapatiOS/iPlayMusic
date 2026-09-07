@@ -19,8 +19,13 @@ struct SongsView: View {
     @StateObject private var vmSong: SongViewModel = .init()
     @StateObject private var vmSuggestionSong: SongSuggestionViewModel = .init()
     @StateObject private var vmSongRealm: SongRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
     
     @ObservedResults(SongRealmModel.self, configuration: SharedRealm.getSharedRealmConfiguration(), where: { $0.isLike && !$0.isDeleted }, sortDescriptor: SortDescriptor(keyPath: "createAt", ascending: false)) var favoriteSongs: Results<SongRealmModel>
+    
+    private var songObjs: [SongModel] {
+        favoriteSongs.compactMap { convertSongRealmToSongModel(song: $0) }
+    }
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -50,77 +55,91 @@ struct SongsView: View {
             ZStack {
                 ScrollView(.vertical) {
                     LazyVStack(spacing: 0) {
-                        if ((!vmSong.songs.isEmpty) || (!vmNewRelease.newSongs.isEmpty)) {
-                            if vmSong.songs.isEmpty {
+                        if !vmSong.songs.isEmpty {
+                            LazyVStack {
+                                ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
+                                    SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
+                                        .frame(height: 55)
+                                        .onAppear {
+                                            if index == vmSong.songs.count - 3 {
+                                                Task { await vmSong.loadMoreSongs() }
+                                            }
+                                        }
+                                        .onTapGesture {
+//                                            Task {
+//                                                await vmSuggestionSong.getSuggestion(songId: song.id)
+//                                            }
+                                            player.setupPlay(songs: [song], playIndex: index)
+
+                                        }
+                                }
+                                if vmSong.isLoadingMore {
+                                    ProgressView()
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                }
+                            }
+                        } else {
+                            if !vmNewRelease.newSongs.isEmpty {
                                 LazyVStack {
-                                    ForEach(vmNewRelease.newSongs, id: \.id) { newSong in
+                                    ForEach(Array(vmNewRelease.newSongs.enumerated()), id: \.element.id) { index, newSong in
                                         SongItemView(song: newSong, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
                                             .onTapGesture {
-                                                Task {
-                                                    await vmSuggestionSong.getSuggestion(songId: newSong.id)
-                                                }
+//                                                Task {
+//                                                    await vmSuggestionSong.getSuggestion(songId: newSong.id)
+//                                                }
+                                                player.setupPlay(songs: vmNewRelease.newSongs, playIndex: index)
                                             }
                                     }
                                 }
-                            } else {
-                                LazyVStack {
-                                    ForEach(Array(vmSong.songs.enumerated()), id: \.element.id) { index, song in
-                                        SongItemView(song: song, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
-                                            .frame(height: 55)
-                                            .onAppear {
-                                                if index == vmSong.songs.count - 3 {
-                                                    Task { await vmSong.loadMoreSongs() }
-                                                }
-                                            }
-                                            .onTapGesture {
-                                                Task {
-                                                    await vmSuggestionSong.getSuggestion(songId: song.id)
-                                                }
-                                            }
-                                    }
-                                    if vmSong.isLoadingMore {
-                                        ProgressView()
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 12)
-                                    }
-                                }
-                            }
-                            
-                            if !favoriteSongs.isEmpty {
-                                VStack {
-                                    Text("Favorite Liked 😘")
-                                        .font(.system(size: 15, weight: .semibold, design: .default))
-                                        .foregroundStyle(theme.subText(isDark: isDark))
-                                        .frame(height: 45)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                    
-                                    LazyVStack {
-                                        ForEach(Array(favoriteSongs.enumerated()), id: \.element.id) { index, favoriteSong in
-                                            if let songObj = convertSongRealmToSongModel(song: favoriteSong) {
-                                                SongItemView(song: songObj, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
-                                                    .frame(height: 55)
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
                                 Text("Like songs to see them here!! ❤️")
                                     .font(.system(size: 10, weight: .semibold, design: .monospaced))
                                     .foregroundStyle(theme.subText(isDark: isDark).opacity(0.2))
                                     .frame(height: 35, alignment: .bottom)
                             }
-                        } else {
-                            EmptyDataView(icon: "music.note.slash", title: "No Songs Found", subTitle: "Search for a song to start listening.")
+                            
+                            if !favoriteSongs.isEmpty {
+                                VStack {
+                                    Text("Favorite Music 😘")
+                                        .font(.system(size: 25, weight: .semibold, design: .default))
+                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .frame(height: 45)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    LazyVStack {
+                                        ForEach(Array(songObjs.enumerated()), id: \.element.id) { index, favoriteSong in
+                                            SongItemView(song: favoriteSong, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
+                                                .frame(height: 55)
+                                                .onTapGesture {
+                                                    player.setupPlay(songs: songObjs, playIndex: index)
+                                                }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding(.bottom)
                     .padding(.horizontal)
                 }
+                
+                if vmSong.songs.isEmpty && vmNewRelease.newSongs.isEmpty && favoriteSongs.isEmpty {
+                    ContentUnavailableView(
+                        "No Songs",
+                        systemImage: "music.note.slash",
+                        description: Text("Search for a song to start listening.")
+                    )
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: appState.searchTextByTab[.songs] ?? "") { _, newValue in
-                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                guard !newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    if !vmSong.songs.isEmpty {
+                        vmSong.songs.removeAll()
+                    }
+                    return
+                }
                 Task {
                     await vmSong.searchSongs(query: newValue)
                 }
@@ -201,9 +220,15 @@ struct SongItemView: View {
     let song: SongModel
     @Binding var isLoading: Bool
     @StateObject private var vmSongRealm: SongRealmViewModel = .shared
+    @StateObject private var audioManager: AudioFileManager = .shared
     let menuAction: ((SongMenuActionType, SongModel) -> Void)
     
     @State private var isLiked: Bool = false
+    @State private var isDownloaded: Bool = false
+    
+    private var downloadProgress: Double? {
+        audioManager.progress(for: song.id)
+    }
         
     var body: some View {
 #if os(macOS)
@@ -225,15 +250,16 @@ struct SongItemView: View {
             
             Spacer(minLength: 10)
             HStack {
-                Button {
-                    menuAction(.download, song)
-                } label: {
-                    Image(systemName: "arrow.down.circle")
-                        .font(.system(size: 20, weight: .light, design: .default))
-                        .foregroundStyle(theme.text(isDark: isDark))
-                        .frame(width: 30, height: 30)
-                        .help("Download")
-                }
+//                Button {
+//                    menuAction(.download, song)
+//                } label: {
+//                    Image(systemName: "arrow.down.circle")
+//                        .font(.system(size: 20, weight: .light, design: .default))
+//                        .foregroundStyle(theme.text(isDark: isDark))
+//                        .frame(width: 30, height: 30)
+//                        .help("Download")
+//                }
+                downloadButton
                 Button {
                     isLiked.toggle()
                     menuAction(.like, song)
@@ -260,6 +286,7 @@ struct SongItemView: View {
         }
         .onAppear {
             isLiked = vmSongRealm.isSongLiked(songId: song.id)
+            isDownloaded = SongDownloadManager.shared.isDownloaded(songId: song.id)
         }
 #else
         SwipeView {
@@ -311,6 +338,49 @@ struct SongItemView: View {
         .swipeEnabled(true )
 #endif
     }
+    
+    @ViewBuilder
+        private var downloadButton: some View {
+            if let progress = downloadProgress {
+                ZStack {
+                    Circle()
+                        .stroke(theme.subText(isDark: isDark).opacity(0.3), lineWidth: 2)
+                    Circle()
+                        .trim(from: 0, to: progress)
+                        .stroke(theme.theme.primary, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 0.2), value: progress)
+                    Text("\(Int(progress * 100))")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(theme.text(isDark: isDark))
+                }
+                .frame(width: 22, height: 22)
+            } else if isDownloaded {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 10, weight: .light))
+                    .foregroundStyle(.green)
+                    .frame(width: 30, height: 30)
+                    .help("Downloaded")
+            } else {
+                Button {
+                    if !StateManager.shared.isPurchased {
+                        StateManager.shared.isShowPurchase = true
+                        return
+                    }
+                    Task {
+                        await SongDownloadManager.shared.downloadSong(song)
+                        isDownloaded = SongDownloadManager.shared.isDownloaded(songId: song.id)   // completion ke baad refresh
+                    }
+                } label: {
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 20, weight: .light, design: .default))
+                        .foregroundStyle(theme.text(isDark: isDark))
+                        .frame(width: 30, height: 30)
+                        .help("Download")
+                }
+            }
+        }
+
 }
 
 #Preview {

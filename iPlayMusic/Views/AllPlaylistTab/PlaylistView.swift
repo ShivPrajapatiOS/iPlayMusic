@@ -17,6 +17,7 @@ struct PlaylistView: View {
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmPlaylist: PlaylistViewModel = .init()
     @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
     
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -103,7 +104,11 @@ struct PlaylistView: View {
                 }
                 
                 if vmPlaylist.playlists.isEmpty && vmNewRelease.newPlaylists.isEmpty && favoritePlaylists.isEmpty {
-                    EmptyDataView(icon: "music.note.list", title: "No Playlist Found", subTitle: "Search for a playlist to start listening.")
+                    ContentUnavailableView(
+                        "No Playlist",
+                        systemImage: "music.note.list",
+                        description: Text("Search for a playlist to start listening.")
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -178,6 +183,7 @@ struct PlaylistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var vmPlaylistRealm: PlaylistRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -215,6 +221,14 @@ struct PlaylistItemView: View {
                         .position(x: (side * iconXFraction) + (side * iconSizeFraction / 2), y: (side * iconYFraction) + (side * iconSizeFraction / 2))
                 }
             }
+            .overlay(alignment: .topTrailing, content: {
+                if isCurrentlyPlaying(id: playlist.id) {
+                    LineVisualizerView()
+                        .padding(5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(theme.border(isDark: isDark)))
+                        .padding(.init(top: 15, leading: 0, bottom: 0, trailing: 15))
+                }
+            })
             .overlay(alignment: .bottom) {
                 if isHover {
                     HStack {
@@ -292,10 +306,15 @@ struct PlaylistItemView: View {
             isLiked = vmPlaylistRealm.isPlaylistLiked(playlistId: playlist.id)
         }
     }
+    
+    private func isCurrentlyPlaying(id: String) -> Bool {
+        return player.currentPlaybackSource.id == id
+    }
 }
 
 #Preview {
     PlaylistView()
+//    PlaylistItemView(playlist: playlist1, isLoading: .constant(false), action: { _, _ in })
 }
 
 

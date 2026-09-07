@@ -17,6 +17,7 @@ struct PlaylistDetailsView: View {
     @StateObject private var appState: StateManager = .shared
     @StateObject private var vmSongRealm: SongRealmViewModel = .shared
     @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
     @StateObject var vmPlaylist: PlaylistViewModel = .init()
     
     private var isDark: Bool {
@@ -65,7 +66,8 @@ struct PlaylistDetailsView: View {
                                     .skeleton(active: vmPlaylist.isLoading)
                                 HStack {
                                     Button {
-                                        print("play")
+                                        guard let playlistPlayback = vmPlaylist.detailsPlaylist else { return }
+                                        PlayerManager.shared.setupPlay(songs: playlistPlayback.songs ?? [], playIndex: 0, source: .playlist(playlistPlayback))
                                     } label: {
                                         HStack {
                                             Image(systemName: "play.fill")
@@ -91,9 +93,13 @@ struct PlaylistDetailsView: View {
                         .padding(.horizontal)
                         VStack(spacing: 15) {
                             LazyVStack {
-                                ForEach(vmPlaylist.detailsPlaylist?.songs ?? [], id: \.id) { song in
+                                ForEach(Array((vmPlaylist.detailsPlaylist?.songs ?? []).enumerated()), id: \.element.id) { index, song in
                                     SongItemView(song: song, isLoading: $vmPlaylist.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                         .frame(height: 55)
+                                        .onTapGesture {
+                                            guard let playlistPlayback = vmPlaylist.detailsPlaylist else { return }
+                                            PlayerManager.shared.setupPlay(songs: playlistPlayback.songs ?? [], playIndex: index, source: .playlist(playlistPlayback))
+                                        }
                                 }
                             }
                             .padding(.horizontal)
@@ -148,6 +154,13 @@ struct PlaylistDetailsView: View {
 #endif
         }
         .navigationBarBackButtonHidden()
+    }
+    
+    private func isCurrentlyPlaying(_ playlist: PlaylistDetailsModel) -> Bool {
+        if case .playlist(let p) = player.currentPlaybackSource {
+            return p.id == playlist.id
+        }
+        return false
     }
     
     private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {

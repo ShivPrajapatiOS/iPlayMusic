@@ -28,6 +28,8 @@ struct HeaderView: View {
     @Binding var txtSearch: String
     @Binding var showCreatePlaylist: Bool
     
+    @State private var isShowSheetDownloaded: Bool = false
+    
     var body: some View {
         HStack(spacing: 16) {
             Group {
@@ -112,6 +114,24 @@ struct HeaderView: View {
                                 .stroke(theme.border(isDark: isDark), lineWidth: 1)
                         )
                 )
+                
+                Button {
+                    withAnimation {
+                        isShowSheetDownloaded = true
+                    }
+                } label: {
+                    Image(systemName: "square.and.arrow.down.badge.checkmark")
+                        .font(.system(size: 14, weight: .light))
+                        .foregroundColor(theme.text(isDark: isDark))
+                        .frame(width: 32.5, height: 32.5)
+                        .background(
+                            Capsule()
+                                .fill(theme.background(isDark: isDark)).overlay(
+                                    Capsule()
+                                        .stroke(theme.border(isDark: isDark), lineWidth: 1)
+                                ))
+                }
+                .buttonStyle(.plain)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 32.5)
@@ -122,6 +142,10 @@ struct HeaderView: View {
                 .fill(.windowBackground)
                 .ignoresSafeArea()
         })
+        .sheet(isPresented: $isShowSheetDownloaded) {
+            DownloadedSongsView()
+                .frame(width: 475, height: 475)
+        }
     }
 }
 

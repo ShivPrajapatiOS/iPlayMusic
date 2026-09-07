@@ -14,6 +14,7 @@ struct AppConstants {
     static let YEARLY_ID = "com.iplay.iplaymusic.yearly"
     static let MONTHLY_ID = "com.iplay.iplaymusic.monthly"
     static let WEEKLY_ID = "com.iplay.iplaymusic.weekly"
+    static let EQUALIZER_LIFETIME_ID = "com.iplay.iplaymusic.equalizer.lifetime"
     
     static let SHARED_SECRET_KEY = "cde2cbf2ff1041d885dce7e8aceb5103"
     

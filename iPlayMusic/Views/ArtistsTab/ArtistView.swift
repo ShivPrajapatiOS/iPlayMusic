@@ -77,7 +77,7 @@ struct ArtistView: View {
                                 VStack {
                                     Text("Favorite Artist 😘")
                                         .font(.system(size: 20, weight: .semibold, design: .default))
-                                        .foregroundStyle(theme.subText(isDark: isDark))
+                                        .foregroundStyle(theme.subText(isDark: isDark).opacity(0.5))
                                         .frame(height: 45)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     
@@ -103,7 +103,11 @@ struct ArtistView: View {
                 }
                 
                 if vmArtist.artists.isEmpty && favoriteArtists.isEmpty && vmNewRelease.newArtists.isEmpty {
-                    EmptyDataView(icon: "music.microphone", title: "No Artist Found", subTitle: "Search for a artists to start listening.")
+                    ContentUnavailableView(
+                        "No Artist",
+                        systemImage: "music.microphone",
+                        description: Text("Search for a artists to start listening.")
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -175,6 +179,7 @@ struct ArtistItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
     @StateObject private var vmArtistRealm: ArtistRealmViewModel = .shared
+    @StateObject private var player: PlayerManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -196,6 +201,14 @@ struct ArtistItemView: View {
             .aspectRatio(1, contentMode: .fit)
             .skeleton(active: isLoading)
             .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(alignment: .topTrailing, content: {
+                if isCurrentlyPlaying(id: artist.id) {
+                    LineVisualizerView()
+                        .padding(5)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(theme.border(isDark: isDark)))
+                        .padding(.init(top: 15, leading: 0, bottom: 0, trailing: 15))
+                }
+            })
             .overlay(alignment: .bottom) {
                 if isHover {
                     HStack {
@@ -266,6 +279,10 @@ struct ArtistItemView: View {
         .onAppear {
             isLiked = vmArtistRealm.isArtistLiked(artistId: artist.id)
         }
+    }
+    
+    private func isCurrentlyPlaying(id: String) -> Bool {
+        return player.currentPlaybackSource.id == id
     }
 }
 

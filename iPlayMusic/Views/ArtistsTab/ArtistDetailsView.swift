@@ -33,9 +33,7 @@ struct ArtistDetailsView: View {
     
     
     let artist: ArtistModel
-    
-    @State private var randomTopSongs: [SongModel] = []
-    
+        
     var body: some View {
         GeometryReader { geoProxy in
 #if !os(macOS)
@@ -72,7 +70,12 @@ struct ArtistDetailsView: View {
                                     .help(vmArtist.artistInfo?.bio?.first?.text ?? "")
                                 HStack {
                                     Button {
-                                        print("play")
+                                        guard let artistPlayback = vmArtist.artistInfo else { return }
+                                        PlayerManager.shared.setupPlay(
+                                            songs: artistPlayback.topSongs ?? [],
+                                            playIndex: 0,
+                                            source: .artist(artistPlayback)
+                                        )
                                     } label: {
                                         HStack {
                                             Image(systemName: "play.fill")
@@ -120,9 +123,17 @@ struct ArtistDetailsView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 45)
                                 LazyVStack {
-                                    ForEach(randomTopSongs, id: \.id) { song in
+                                    ForEach(Array((vmArtist.artistInfo?.topSongs ?? []).enumerated()), id: \.element.id) { index, song in
                                         SongItemView(song: song, isLoading: $vmArtist.isLoading, menuAction: { songMenuActionPerform($0, $1) })
                                             .frame(height: 55)
+                                            .onTapGesture {
+                                                guard let artistPlayback = vmArtist.artistInfo else { return }
+                                                PlayerManager.shared.setupPlay(
+                                                    songs: artistPlayback.topSongs ?? [],
+                                                    playIndex: index,
+                                                    source: .artist(artistPlayback)
+                                                )
+                                            }
                                     }
                                 }
                             }
@@ -190,9 +201,6 @@ struct ArtistDetailsView: View {
             .edgesIgnoringSafeArea(.init(arrayLiteral: .top))
             .task(priority: .userInitiated) {
                 await vmArtist.loadArtist(id: artist.id)
-                if let allSongs = vmArtist.artistInfo?.topSongs {
-                    randomTopSongs = Array(allSongs.shuffled().prefix(5))
-                }
             }
             .task(priority: .utility) {
                 guard let artistName = artist.name else { return }

@@ -27,9 +27,9 @@ struct VerticalSlider: View {
     var maxValue: CGFloat = 1
 
     let knobSize: CGFloat = 20
-
-    var onSeeking: ((Float, Bool) -> Void)? = nil
+    
     @Binding var isHover: Bool
+    var onSeeking: ((Float, Bool) -> Void)? = nil
 
     var body: some View {
         ZStack {
@@ -103,9 +103,8 @@ struct MacOSHorizontalSlider: View {
     
     // नया constant: Tap/Drag करने के लिए बड़ा size
     let hitAreaSize: CGFloat = 40
-
-    var onSeeking: ((Float, Bool) -> Void)? = nil
     @Binding var isHover: Bool
+    var onSeeking: ((Float, Bool) -> Void)? = nil
 
     var body: some View {
         ZStack {
