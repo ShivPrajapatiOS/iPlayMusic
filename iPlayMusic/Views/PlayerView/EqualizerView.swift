@@ -32,7 +32,7 @@ struct EqualizerView: View {
                     Text("Base Booster")
                         .foregroundStyle(.gray)
                         .font(.system(size: 12, weight: .semibold, design: .default))
-                    MacOSHorizontalSlider(progress: $preAmplification, minValue: -20, maxValue: 20, isHover: .constant(false)) { (amplification, isTracking) in
+                    MacOSHorizontalSlider(progress: $preAmplification, minValue: -20, maxValue: 20, isHover: .constant(true)) { (amplification, isTracking) in
                         player.updatePreAmplification(amplification)
                     }
                     Spacer(minLength: 0)

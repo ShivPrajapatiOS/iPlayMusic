@@ -63,6 +63,11 @@ class SyncService: ObservableObject {
         processedItems += fetchedMyPlaylists.count
         await updateProgressOnMain(processed: processedItems, total: totalItems)
         
+        fetchedSongs.forEach({ s in
+            guard let filePath = s.localAudioFileName else { return }
+            let url = AudioFileManager.shared.localFileURL(fileName: filePath)
+            print(url)
+        })
         // SONGS
         try realm.write {
             realm.add(fetchedSongs, update: .modified)

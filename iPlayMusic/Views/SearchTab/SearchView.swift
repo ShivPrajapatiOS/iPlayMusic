@@ -382,6 +382,10 @@ struct PlaylistSearchItemView: View {
     @StateObject private var theme: ThemeManager = .shared
     @Environment(\.colorScheme) private var systemScheme
     
+    private let iconXFraction: CGFloat = 0.049
+    private let iconYFraction: CGFloat = 0.052
+    private let iconSizeFraction: CGFloat = 0.079
+    
     private var isDark: Bool {
         if theme.themeMode == .system {
             return systemScheme == .dark
@@ -392,7 +396,18 @@ struct PlaylistSearchItemView: View {
     var body: some View {
         VStack(spacing: 8) {
             RoundedRectangleWebImageView(url: URL(string: playlist.thumbnailURL ?? ""), thumbnail: "music.note.list")
-            
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay {
+                    GeometryReader { proxy in
+                        let side = proxy.size.width
+                        Image("ic_splash")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .background(Circle().fill(Color("#000000")))
+                            .position(x: (side * iconXFraction) + (side * iconSizeFraction / 2), y: (side * iconYFraction) + (side * iconSizeFraction / 2))
+                    }
+                }
             // Artist Title
             Text(playlist.title ?? "Unknown")
                 .font(.system(size: 13, weight: .semibold))

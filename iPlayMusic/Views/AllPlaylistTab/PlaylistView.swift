@@ -276,7 +276,7 @@ struct PlaylistItemView: View {
             
             // MARK: - Playlist Details
             VStack(alignment: .leading, spacing: 3) {
-                Text(playlist.name ?? "Unknown Playlist")
+                Text(playlist.name ?? "Unknown")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(theme.text(isDark: isDark))
                     .lineLimit(1)

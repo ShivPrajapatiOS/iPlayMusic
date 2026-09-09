@@ -155,7 +155,7 @@ struct AlbumDetailsView: View {
         .navigationBarBackButtonHidden()
     }
     
-    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+    private func songMenuActionPerform(_ type: SongMenuActionType?, _ song: SongModel) {
         switch type {
         case .play:
             print("Play")
@@ -186,8 +186,7 @@ struct AlbumDetailsView: View {
                     vmSongRealm.errorMessage = error.localizedDescription
                 }
             }
-        case .download:
-            print("Download")
+        default: break;
         }
     }
     

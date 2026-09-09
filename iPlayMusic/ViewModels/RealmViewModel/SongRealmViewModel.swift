@@ -68,6 +68,94 @@ class SongRealmViewModel: ObservableObject {
         guard let realm = self.realm else { return false }
         return realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first?.isLike ?? false
     }
+    
+    func isAddedToPlaylist(songId: String) -> Bool {
+        guard let realm = self.realm else { return false }
+        return realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first?.playlist_id != nil
+    }
+    
+    func getMyPlaylists() -> [MyPlaylistRealmModel] {
+        guard let realm = self.realm else { return [] }
+        return realm.objects(MyPlaylistRealmModel.self).filter("isDeleted == false AND isSync == true").map({ $0 })
+    }
+    
+    func deleteDownloadedSong(songId: String) async throws -> SongRealmModel {
+        guard let realm = self.realm else { throw RealmError.realmAccessFailed }
+        if let existing = realm.objects(SongRealmModel.self).filter("song_id == %@", songId).first {
+            AudioFileManager.shared.deleteAudio(fileName: existing.localAudioFileName)
+            do {
+                try realm.write {
+                    existing.isDownloaded = false
+                    existing.localAudioFileName = nil
+                    existing.isSync = false
+                    existing.updateAt = Date()
+                }
+                return existing.freeze()
+            } catch {
+                throw RealmError.writeFailed(error.localizedDescription)
+            }
+        } else {
+            throw RealmError.deleteFailed("No song found with id: \(songId)")
+        }
+    }
+    
+        /// SelectSongSheetView se aaye selected songs ko diye gaye playlist me add karta hai.
+        /// Flow:
+        /// 1. Realm me check karo — har song already hai ya naya hai
+        /// 2. Already hai → sirf playlist_id update, isSync = false
+        /// 3. Naya hai → SongModel se SongRealmModel banao, playlist_id assign karke Realm me add karo
+        /// 4. Sabhi objects (existing update + naye) ek list me collect karo
+        /// 5. Ek-ek karke Firebase par updateSong() call karo (existing ko update kar dega, naye ko automatically create kar dega)
+        /// 6. Har success ke baad turant isSync(object:) se Realm me isSync = true karo, phir agla object process karo
+    func addSelectedSongsToPlaylist(_ songs: [SongModel], playlistId: ObjectId) async throws {
+            guard let realm = self.realm else { throw RealmError.realmAccessFailed }
+            
+            let playlistIdString = playlistId.stringValue
+            var songsToSync: [SongRealmModel] = []
+            
+            // MARK: Step 1 & 2 & 3 — Existing vs New split, Realm me write
+            for song in songs {
+                if let existing = realm.objects(SongRealmModel.self).filter("song_id == %@", song.id).first {
+                    // Case: Song already Realm me hai → sirf playlist_id update karo
+                    do {
+                        try realm.write {
+                            existing.playlist_id = playlistIdString
+                            existing.isSync = false
+                            existing.updateAt = Date()
+                        }
+                        songsToSync.append(existing.freeze())
+                    } catch {
+                        throw RealmError.writeFailed(error.localizedDescription)
+                    }
+                } else {
+                    // Case: Naya song → SongModel se SongRealmModel banao, playlist_id assign karo
+                    let newSong = mapToRealmSong(from: song, playlistId: playlistIdString)
+                    // isSync default hi false hai (SongRealmModel declaration me)
+                    
+                    do {
+                        try realm.write {
+                            realm.add(newSong)
+                        }
+                        songsToSync.append(newSong.freeze())
+                    } catch {
+                        throw RealmError.writeFailed(error.localizedDescription)
+                    }
+                }
+            }
+            
+            // MARK: Step 4 & 5 & 6 — Ek-ek karke Firebase sync, phir isSync true
+            for songToSync in songsToSync {
+                do {
+                    let reference = try await FirebaseSyncManager.shared.updateSong(song: songToSync)
+                    print("✅ Firebase synced: \(reference)")
+                    try await FirebaseSyncManager.shared.isSync(object: songToSync)
+                } catch {
+                    errorMessage = error.localizedDescription
+                    // Ek song fail ho to baaki songs ka sync rukna nahi chahiye
+                    continue
+                }
+            }
+        }
 }
 
 

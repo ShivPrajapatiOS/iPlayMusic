@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum MyPlaylistMenuType {
-    case edit, play, shuffle, addToQueue, delete
+    case edit, addSong, addToQueue, delete
 }
 
 #if os(macOS)
@@ -193,14 +193,9 @@ struct BackButtonHeaderView: View {
                         }
                         Divider()
                         Button {
-                            myPlaylistMenuAction?(.play)
+                            myPlaylistMenuAction?(.addSong)
                         } label: {
-                            Label("Play", systemImage: "play")
-                        }
-                        Button {
-                            myPlaylistMenuAction?(.shuffle)
-                        } label: {
-                            Label("Shuffle", systemImage: "shuffle")
+                            Label("Add Songs", systemImage: "music.note")
                         }
                         Button {
                             myPlaylistMenuAction?(.addToQueue)
@@ -226,26 +221,6 @@ struct BackButtonHeaderView: View {
                                             .stroke(theme.border(isDark: isDark), lineWidth: 1)
                                     ))
                     }
-                }
-                
-                Menu {
-                    Button {
-                        print("All Albums")
-                    } label: {
-                        Label("All Albums", systemImage: "checkmark")
-                    }
-                    
-                } label: {
-                    Image(systemName: "line.horizontal.3.decrease")
-                        .font(.system(size: 14, weight: .light))
-                        .foregroundColor(theme.text(isDark: isDark))
-                        .frame(width: 32.5, height: 32.5)
-                        .background(
-                            Capsule()
-                                .fill(theme.background(isDark: isDark)).overlay(
-                                    Capsule()
-                                        .stroke(theme.border(isDark: isDark), lineWidth: 1)
-                                ))
                 }
             }
             .buttonStyle(.plain)

@@ -9,6 +9,7 @@ import SwiftUI
 import RealmSwift
 import Realm
 import SkeletonUI
+import VLCKit
 
 struct SongsView: View {
     @Environment(\.colorScheme) private var systemScheme
@@ -164,7 +165,7 @@ struct SongsView: View {
         }
     }
     
-    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+    private func songMenuActionPerform(_ type: SongMenuActionType?, _ song: SongModel) {
         switch type {
         case .play:
             print("Play")
@@ -195,8 +196,7 @@ struct SongsView: View {
                     vmSongRealm.errorMessage = error.localizedDescription
                 }
             }
-        case .download:
-            print("Download")
+        default: break;
         }
     }
 }
@@ -204,11 +204,12 @@ struct SongsView: View {
 
 // MARK: - SongItemView
 enum SongMenuActionType: String, CaseIterable {
-    case play, addToMyplaylist, addToQueue, like, download
+    case play, addToMyplaylist, addToQueue, like, delete, removeFromPlaylist
 }
 struct SongItemView: View {
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var player: PlayerManager = .shared
 
     private var isDark: Bool {
         if theme.themeMode == .system {
@@ -221,10 +222,11 @@ struct SongItemView: View {
     @Binding var isLoading: Bool
     @StateObject private var vmSongRealm: SongRealmViewModel = .shared
     @StateObject private var audioManager: AudioFileManager = .shared
-    let menuAction: ((SongMenuActionType, SongModel) -> Void)
+    let menuAction: ((SongMenuActionType?, SongModel) -> Void)
     
     @State private var isLiked: Bool = false
     @State private var isDownloaded: Bool = false
+    @State private var isAddedToPlaylist: Bool = false
     
     private var downloadProgress: Double? {
         audioManager.progress(for: song.id)
@@ -236,6 +238,11 @@ struct SongItemView: View {
             RoundedRectangleWebImageView(url: URL(string: song.thumbnailURL ?? ""))
                 .frame(width: 40, height: 40)
                 .skeleton(active: isLoading)
+                .overlay {
+                    if player.state == .playing && player.currentSong?.id == song.id {
+                        LineVisualizerView()
+                    }
+                }
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(song.name ?? "Unknown") \(song.id)")
                     .font(.system(size: 13, weight: .regular, design: .default))
@@ -250,15 +257,6 @@ struct SongItemView: View {
             
             Spacer(minLength: 10)
             HStack {
-//                Button {
-//                    menuAction(.download, song)
-//                } label: {
-//                    Image(systemName: "arrow.down.circle")
-//                        .font(.system(size: 20, weight: .light, design: .default))
-//                        .foregroundStyle(theme.text(isDark: isDark))
-//                        .frame(width: 30, height: 30)
-//                        .help("Download")
-//                }
                 downloadButton
                 Button {
                     isLiked.toggle()
@@ -284,8 +282,36 @@ struct SongItemView: View {
                         .stroke(theme.secondaryCard(isDark: isDark), lineWidth: 1)
                 }
         }
+        .contextMenu {
+            VStack {
+                Button {
+                    menuAction(.like, song)
+                } label: {
+                    Label(isLiked ? "Unfavorite" : "Favorite", systemImage: isLiked ? "heart.fill" : "heart")
+                }
+                if isDownloaded {
+                    Button {
+                        menuAction(.delete, song)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                            .tint(.red)
+                    }
+                }
+                if isAddedToPlaylist {
+                    Button {
+                        menuAction(.delete, song)
+                    } label: {
+                        Label("Remove from playlist", systemImage: "music.note.list")
+                    }
+                } else {
+                    playlistsMenu
+                }
+                
+            }
+        }
         .onAppear {
             isLiked = vmSongRealm.isSongLiked(songId: song.id)
+            isAddedToPlaylist = vmSongRealm.isAddedToPlaylist(songId: song.id)
             isDownloaded = SongDownloadManager.shared.isDownloaded(songId: song.id)
         }
 #else
@@ -337,6 +363,19 @@ struct SongItemView: View {
         .swipeActionsStyle(.mask)
         .swipeEnabled(true )
 #endif
+    }
+    
+    @ViewBuilder
+    private var playlistsMenu: some View {
+        Menu("Add in my playlist", systemImage: "music.note.list") {
+            ForEach(vmSongRealm.getMyPlaylists(), id: \._id) { myPlaylist in
+                Button {
+                    print("")
+                } label: {
+                    Text(myPlaylist.name)
+                }
+            }
+        }
     }
     
     @ViewBuilder

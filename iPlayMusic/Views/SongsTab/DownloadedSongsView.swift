@@ -14,6 +14,7 @@ struct DownloadedSongsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var systemScheme
     @StateObject private var theme: ThemeManager = .shared
+    @StateObject private var networkManager: NetworkManager = .init()
     @StateObject private var appState: StateManager = .shared
 
     private var isDark: Bool {
@@ -71,7 +72,7 @@ struct DownloadedSongsView: View {
         }
     }
     
-    private func songMenuActionPerform(_ type: SongMenuActionType, _ song: SongModel) {
+    private func songMenuActionPerform(_ type: SongMenuActionType?, _ song: SongModel) {
         switch type {
         case .play:
             print("Play")
@@ -102,8 +103,25 @@ struct DownloadedSongsView: View {
                     vmSongRealm.errorMessage = error.localizedDescription
                 }
             }
-        case .download:
-            print("Download")
+        case .delete:
+            Task {
+                do {
+                    vmSongRealm.isLoading = true
+                    let deletedDonwloadedSongObj = try await vmSongRealm.deleteDownloadedSong(songId: song.id)
+                    print(deletedDonwloadedSongObj.toJSON())
+                    vmSongRealm.errorMessage = nil
+                    vmSongRealm.isLoading = false
+                    if networkManager.isConnected {
+                        let tableReference = try await FirebaseSyncManager.shared.updateSong(song: deletedDonwloadedSongObj)
+                        print("this Object isSynced: \(tableReference)")
+                        try await FirebaseSyncManager.shared.isSync(object: deletedDonwloadedSongObj)
+                    }
+                } catch {
+                    vmSongRealm.isLoading = false
+                    vmSongRealm.errorMessage = error.localizedDescription
+                }
+            }
+        default: break;
         }
     }
 }
