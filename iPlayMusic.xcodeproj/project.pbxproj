@@ -1,0 +1,637 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		584E9E723017DDE600E9592F /* SkeletonUI in Frameworks */ = {isa = PBXBuildFile; productRef = 584E9E713017DDE600E9592F /* SkeletonUI */; };
+		5854A9C5300ACD58000AD76F /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 5854A9C4300ACD58000AD76F /* SDWebImageSwiftUI */; };
+		585BBE3D3023B0E400A043EB /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 585BBE3C3023B0E400A043EB /* RealmSwift */; };
+		585BBE3E3023B0F500A043EB /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 585BBE3C3023B0E400A043EB /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		5868B346301BD11200F56F82 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B345301BD11200F56F82 /* FirebaseAnalytics */; };
+		5868B348301BD11200F56F82 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B347301BD11200F56F82 /* FirebaseAppCheck */; };
+		5868B34A301BD11200F56F82 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B349301BD11200F56F82 /* FirebaseAuth */; };
+		5868B34C301BD11200F56F82 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B34B301BD11200F56F82 /* FirebaseCore */; };
+		5868B34E301BD11200F56F82 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B34D301BD11200F56F82 /* FirebaseCrashlytics */; };
+		5868B350301BD11200F56F82 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B34F301BD11200F56F82 /* FirebaseDatabase */; };
+		5868B352301BD11200F56F82 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B351301BD11200F56F82 /* FirebaseFirestore */; };
+		5868B354301BD11200F56F82 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B353301BD11200F56F82 /* FirebaseMessaging */; };
+		5868B356301BD11200F56F82 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B355301BD11200F56F82 /* FirebaseRemoteConfig */; };
+		5868B358301BD11200F56F82 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B357301BD11200F56F82 /* FirebaseStorage */; };
+		5868B35B301BD15A00F56F82 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B35A301BD15A00F56F82 /* GoogleSignIn */; };
+		5868B35D301BD15A00F56F82 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 5868B35C301BD15A00F56F82 /* GoogleSignInSwift */; };
+		58710B0B30488D0A00818D10 /* VLCKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58710B0A30488D0A00818D10 /* VLCKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		585BBBC03023A7F000A043EB /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				585BBE3E3023B0F500A043EB /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		58883DBC300003BD0035703C /* iPlayMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iPlayMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5868B36B301BDB2D00F56F82 /* Exceptions for "iPlayMusic" folder in "iPlayMusic" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 58883DBB300003BD0035703C /* iPlayMusic */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5854A989300AA3CD000AD76F /* iPlayMusic */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5868B36B301BDB2D00F56F82 /* Exceptions for "iPlayMusic" folder in "iPlayMusic" target */,
+			);
+			path = iPlayMusic;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		58883DB9300003BD0035703C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5868B356301BD11200F56F82 /* FirebaseRemoteConfig in Frameworks */,
+				5868B348301BD11200F56F82 /* FirebaseAppCheck in Frameworks */,
+				5868B34A301BD11200F56F82 /* FirebaseAuth in Frameworks */,
+				58710B0B30488D0A00818D10 /* VLCKit in Frameworks */,
+				585BBE3D3023B0E400A043EB /* RealmSwift in Frameworks */,
+				5868B35B301BD15A00F56F82 /* GoogleSignIn in Frameworks */,
+				5868B354301BD11200F56F82 /* FirebaseMessaging in Frameworks */,
+				5854A9C5300ACD58000AD76F /* SDWebImageSwiftUI in Frameworks */,
+				5868B358301BD11200F56F82 /* FirebaseStorage in Frameworks */,
+				5868B34E301BD11200F56F82 /* FirebaseCrashlytics in Frameworks */,
+				584E9E723017DDE600E9592F /* SkeletonUI in Frameworks */,
+				5868B35D301BD15A00F56F82 /* GoogleSignInSwift in Frameworks */,
+				5868B352301BD11200F56F82 /* FirebaseFirestore in Frameworks */,
+				5868B34C301BD11200F56F82 /* FirebaseCore in Frameworks */,
+				5868B350301BD11200F56F82 /* FirebaseDatabase in Frameworks */,
+				5868B346301BD11200F56F82 /* FirebaseAnalytics in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		58883DB3300003BD0035703C = {
+			isa = PBXGroup;
+			children = (
+				5854A989300AA3CD000AD76F /* iPlayMusic */,
+				58883DBD300003BD0035703C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		58883DBD300003BD0035703C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				58883DBC300003BD0035703C /* iPlayMusic.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		58883DBB300003BD0035703C /* iPlayMusic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 58883DC7300003BF0035703C /* Build configuration list for PBXNativeTarget "iPlayMusic" */;
+			buildPhases = (
+				58883DB8300003BD0035703C /* Sources */,
+				58883DB9300003BD0035703C /* Frameworks */,
+				58883DBA300003BD0035703C /* Resources */,
+				585BBBC03023A7F000A043EB /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5854A989300AA3CD000AD76F /* iPlayMusic */,
+			);
+			name = iPlayMusic;
+			packageProductDependencies = (
+				5854A9C4300ACD58000AD76F /* SDWebImageSwiftUI */,
+				584E9E713017DDE600E9592F /* SkeletonUI */,
+				5868B345301BD11200F56F82 /* FirebaseAnalytics */,
+				5868B347301BD11200F56F82 /* FirebaseAppCheck */,
+				5868B349301BD11200F56F82 /* FirebaseAuth */,
+				5868B34B301BD11200F56F82 /* FirebaseCore */,
+				5868B34D301BD11200F56F82 /* FirebaseCrashlytics */,
+				5868B34F301BD11200F56F82 /* FirebaseDatabase */,
+				5868B351301BD11200F56F82 /* FirebaseFirestore */,
+				5868B353301BD11200F56F82 /* FirebaseMessaging */,
+				5868B355301BD11200F56F82 /* FirebaseRemoteConfig */,
+				5868B357301BD11200F56F82 /* FirebaseStorage */,
+				5868B35A301BD15A00F56F82 /* GoogleSignIn */,
+				5868B35C301BD15A00F56F82 /* GoogleSignInSwift */,
+				585BBE3C3023B0E400A043EB /* RealmSwift */,
+				58710B0A30488D0A00818D10 /* VLCKit */,
+			);
+			productName = iPlayMusic;
+			productReference = 58883DBC300003BD0035703C /* iPlayMusic.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		58883DB4300003BD0035703C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					58883DBB300003BD0035703C = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = 58883DB7300003BD0035703C /* Build configuration list for PBXProject "iPlayMusic" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 58883DB3300003BD0035703C;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5854A9C3300ACD58000AD76F /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+				584E9E703017DDE600E9592F /* XCRemoteSwiftPackageReference "SkeletonUI" */,
+				5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				5868B359301BD15A00F56F82 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				585BBE3B3023B0E400A043EB /* XCRemoteSwiftPackageReference "realm-swift" */,
+				58710B0930488D0A00818D10 /* XCRemoteSwiftPackageReference "VLCKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 58883DBD300003BD0035703C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				58883DBB300003BD0035703C /* iPlayMusic */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		58883DBA300003BD0035703C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		58883DB8300003BD0035703C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		58883DC5300003BF0035703C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = MVKFHQMUPP;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		58883DC6300003BF0035703C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MVKFHQMUPP;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		58883DC8300003BF0035703C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iPlayMusicIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				AUTOMATION_APPLE_EVENTS = NO;
+				CODE_SIGN_ENTITLEMENTS = iPlayMusic/iPlayMusic.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MVKFHQMUPP;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readwrite;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iPlayMusic/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "iPlay Music";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iplay.iplaymusic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		58883DC9300003BF0035703C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = iPlayMusicIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				AUTOMATION_APPLE_EVENTS = NO;
+				CODE_SIGN_ENTITLEMENTS = iPlayMusic/iPlayMusic.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MVKFHQMUPP;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readwrite;
+				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readwrite;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iPlayMusic/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "iPlay Music";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iplay.iplaymusic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		58883DB7300003BD0035703C /* Build configuration list for PBXProject "iPlayMusic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58883DC5300003BF0035703C /* Debug */,
+				58883DC6300003BF0035703C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		58883DC7300003BF0035703C /* Build configuration list for PBXNativeTarget "iPlayMusic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58883DC8300003BF0035703C /* Debug */,
+				58883DC9300003BF0035703C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		584E9E703017DDE600E9592F /* XCRemoteSwiftPackageReference "SkeletonUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ErsanQ/SkeletonUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.3;
+			};
+		};
+		5854A9C3300ACD58000AD76F /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.4;
+			};
+		};
+		585BBE3B3023B0E400A043EB /* XCRemoteSwiftPackageReference "realm-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/realm-swift.git";
+			requirement = {
+				branch = community;
+				kind = branch;
+			};
+		};
+		5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
+		5868B359301BD15A00F56F82 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.2.0;
+			};
+		};
+		58710B0930488D0A00818D10 /* XCRemoteSwiftPackageReference "VLCKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://code.videolan.org/videolan/VLCKit.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		584E9E713017DDE600E9592F /* SkeletonUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 584E9E703017DDE600E9592F /* XCRemoteSwiftPackageReference "SkeletonUI" */;
+			productName = SkeletonUI;
+		};
+		5854A9C4300ACD58000AD76F /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5854A9C3300ACD58000AD76F /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
+		};
+		585BBE3C3023B0E400A043EB /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 585BBE3B3023B0E400A043EB /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
+		};
+		5868B345301BD11200F56F82 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		5868B347301BD11200F56F82 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		5868B349301BD11200F56F82 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		5868B34B301BD11200F56F82 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		5868B34D301BD11200F56F82 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		5868B34F301BD11200F56F82 /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		5868B351301BD11200F56F82 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		5868B353301BD11200F56F82 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		5868B355301BD11200F56F82 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
+		};
+		5868B357301BD11200F56F82 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B344301BD11200F56F82 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+		5868B35A301BD15A00F56F82 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B359301BD15A00F56F82 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		5868B35C301BD15A00F56F82 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5868B359301BD15A00F56F82 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		58710B0A30488D0A00818D10 /* VLCKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 58710B0930488D0A00818D10 /* XCRemoteSwiftPackageReference "VLCKit" */;
+			productName = VLCKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 58883DB4300003BD0035703C /* Project object */;
+}
