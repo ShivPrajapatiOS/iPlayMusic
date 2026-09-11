@@ -86,3 +86,59 @@ struct DownloadUrl: Decodable {
     let quality: AudioQuality?
     let url: String?
 }
+
+extension SongModel {
+    // MARK: - JSON Dictionary
+    func toJSON() -> [String: Any] {
+        return [
+            "id": id,
+            "name": name as Any,
+            "type": type as Any,
+            "year": year as Any,
+            "releaseDate": releaseDate as Any,
+            "duration": duration as Any,
+            "label": label as Any,
+            "explicitContent": explicitContent as Any,
+            "playCount": playCount as Any,
+            "language": language as Any,
+            "hasLyrics": hasLyrics as Any,
+            "lyricsId": lyricsId as Any,
+            "url": url as Any,
+            "copyright": copyright as Any,
+            "album": [
+                "id": album?.id as Any,
+                "name": album?.name as Any,
+                "url": album?.url as Any
+            ],
+            "image": image?.map {
+                [
+                    "quality": $0.quality?.rawValue as Any,
+                    "url": $0.url as Any
+                ]
+            } as Any,
+            "downloadUrl": downloadUrl?.map {
+                [
+                    "quality": $0.quality?.rawValue as Any,
+                    "url": $0.url as Any
+                ]
+            } as Any
+        ]
+    }
+    
+    // MARK: - JSON Data
+    func toData() -> Data? {
+        do {
+            return try JSONSerialization.data(withJSONObject: toJSON(), options: [])
+        } catch {
+            print("❌ Song JSON Data conversion error:", error)
+            return nil
+        }
+    }
+    
+    // MARK: - JSON String
+    func toJSONString() -> String? {
+        guard let data = toData() else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+}
+

@@ -27,7 +27,7 @@ struct ContentView: View {
     }
     
 #if !os(macOS)
-    @State private var selectedTab: AppTabBar = .home
+    @State private var selectedTab: AppTabBar = .song
     @State private var isShowSearch: Bool = false
     @Namespace private var searchAnimation
 #else
@@ -77,6 +77,25 @@ struct ContentView: View {
                     }
                 }
                 .animation(.easeInOut, value: isShowSearch)
+                .onChange(of: StateManager.shared.musicLanguage) {
+                    vmNewRelease.startLoading()
+                }
+                .onFirstAppear {
+                    vmNewRelease.startLoading()
+                    Task {
+                        do {
+                            if networkManager.isConnected {
+                                syncManager.isLoading = true
+                                let _ = try await FirebaseSyncManager.shared.syncDataObjects()
+                                try await syncManager.startFullSync()
+                                syncManager.isLoading = false
+                            }
+                        } catch {
+                            print(error.localizedDescription)
+                            syncManager.isLoading = false
+                        }
+                    }
+                }
             }
 #else
             ZStack {

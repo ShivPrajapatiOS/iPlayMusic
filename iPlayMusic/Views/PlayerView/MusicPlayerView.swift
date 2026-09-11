@@ -7,6 +7,7 @@
 
 import SwiftUI
 import VLCKit
+import UniformTypeIdentifiers
 
 enum QueueAndLyrics: String, CaseIterable {
     case playback, lyrics
@@ -42,6 +43,8 @@ struct MusicPlayerView: View {
     @State private var isShowSettings: Bool = false
         
     var namespace: Namespace.ID
+    
+    @State private var dropTargetIndex: Int? = nil
         
     var body: some View {
         GeometryReader { geoProxy in
@@ -233,12 +236,43 @@ struct MusicPlayerView: View {
                                         ForEach(Array(player.queueSongsList.enumerated()), id: \.element.id) { (index, song) in
                                             QueueItemView(song: song)
                                                 .frame(height: 50)
+                                                .onDrag {
+                                                    return NSItemProvider(object: song.id as NSString)
+                                                }
                                                 .overlay(alignment: .bottom) {
                                                     if song.id != player.queueSongsList.last?.id {
-                                                        Capsule()
-                                                            .fill(theme.secondaryCard(isDark: isDark).opacity(0.5))
-                                                            .frame(height: 1)
+                                                        if dropTargetIndex == index {
+                                                            Color.green
+                                                                .frame(height: 1)
+                                                        } else {
+                                                            Capsule()
+                                                                .fill(theme.secondaryCard(isDark: isDark).opacity(0.5))
+                                                                .frame(height: 1)
+                                                        }
                                                     }
+                                                }
+                                                .onDrop(
+                                                    of: [.text],
+                                                    isTargeted: Binding(
+                                                        get: { dropTargetIndex == index },
+                                                        set: { hovering in
+                                                            if hovering {
+                                                                dropTargetIndex = index
+                                                            } else {
+                                                                dropTargetIndex = nil
+                                                            }
+                                                        }
+                                                    )
+                                                ) { providers in
+                                                    guard let provider = providers.first else { return false }
+                                                    _ = provider.loadObject(ofClass: NSString.self) { value, _ in
+                                                        guard let draggedId = value as? String else { return }
+                                                        DispatchQueue.main.async {
+                                                            player.moveSong(id: draggedId, to: index)
+                                                            dropTargetIndex = nil
+                                                        }
+                                                    }
+                                                    return true
                                                 }
                                                 .onTapGesture {
                                                     player.playFromPlaylist(index: index)

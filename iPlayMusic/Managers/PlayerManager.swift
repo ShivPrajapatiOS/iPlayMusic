@@ -70,6 +70,13 @@ final class PlayerManager: NSObject, ObservableObject {
         super.init()
         checkAndResumeTimer()
         setupRemoteCommandCenter()
+        restoreQueue()
+    }
+    
+    private func restoreQueue() {
+        let restoredSongs = QueueRealmViewModel.shared.loadQueue()
+        guard !restoredSongs.isEmpty else { return }
+        queueSongsList = restoredSongs
     }
     
     private func setupRemoteCommandCenter() {
@@ -135,7 +142,11 @@ final class PlayerManager: NSObject, ObservableObject {
         }
         
         URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+#if os(macOS)
             guard let self, let data, let image = NSImage(data: data) else { return }
+#else
+            guard let self, let data, let image = UIImage(data: data) else { return }
+#endif
             
             let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
             
@@ -170,7 +181,7 @@ final class PlayerManager: NSObject, ObservableObject {
             queueSongsList = validPairs.map { $0.song }
             currentPlaybackSource = source
             let medias = validPairs.map { $0.media }
-            
+            QueueRealmViewModel.shared.saveQueue(queueSongsList)
             let safePlayIndex = min(max(playIndex, 0), medias.count - 1)
             
             mediaList = VLCMediaList(array: medias)
@@ -212,6 +223,66 @@ final class PlayerManager: NSObject, ObservableObject {
         event.send(.currentMedia(currentVlcMedia, currentSong))
         updateNowPlayingInfo()
     }
+    
+    func playQueueItem(at index: Int) {
+        guard index < queueSongsList.count else { return }
+        if mediaList.count == queueSongsList.count {
+            playFromPlaylist(index: index)
+        } else {
+            setupPlay(songs: queueSongsList, playIndex: index, source: currentPlaybackSource)
+        }
+    }
+    
+    /// Queue me drag-and-drop se reorder karta hai — `queueSongsList`,
+    /// underlying `mediaList` (VLC), aur persisted local queue (Realm)
+    /// teeno ko sync rakhta hai.
+    func moveSong(id: String, to targetIndex: Int) {
+        guard let fromIndex = queueSongsList.firstIndex(where: { $0.id == id }) else { return }
+        guard fromIndex != targetIndex else { return }
+        
+        // MARK: 1. queueSongsList reorder (UI list)
+        let song = queueSongsList.remove(at: fromIndex)
+        let clampedTarget = min(max(targetIndex, 0), queueSongsList.count)
+        queueSongsList.insert(song, at: clampedTarget)
+        
+        // MARK: 2. VLC mediaList reorder — same index se, kyunki queueSongsList
+        // aur mediaList hamesha parallel/same-order maintain karte hain
+        if fromIndex < mediaList.count {
+            mediaList.lock()
+            if let media = mediaList.media(at: UInt(fromIndex)) {
+                mediaList.removeMedia(at: UInt(fromIndex))
+                mediaList.insert(media, at: UInt(clampedTarget))
+            }
+            mediaList.unlock()
+        }
+        
+        // MARK: 3. Local persisted queue bhi naye order se save karo
+        QueueRealmViewModel.shared.saveQueue(queueSongsList)
+    }
+    
+    func removeFromQueue(at index: Int) {
+        guard index < queueSongsList.count else { return }
+        let song = queueSongsList[index]
+        
+        queueSongsList.remove(at: index)
+        
+        // VLC ka actual live mediaList operate karo — self.mediaList ki jagah
+        if let liveMediaList = mediaListPlayer?.mediaList, index < liveMediaList.count {
+            liveMediaList.lock()
+            liveMediaList.removeMedia(at: UInt(index))
+            liveMediaList.unlock()
+        }
+        
+        QueueRealmViewModel.shared.removeSong(songId: song.id)
+    }
+    
+    func clearQueue() {
+        queueSongsList.removeAll()
+        mediaList = VLCMediaList()
+        QueueRealmViewModel.shared.clearQueue()
+    }
+    
+    
     
     func nextPlay() {
         if !isShuffle {

@@ -30,6 +30,10 @@ struct PlaylistDetailsView: View {
     @State private var showImage = false    
     
     let playlist: PlaylistModel
+    
+    private let iconXFraction: CGFloat = 0.049
+    private let iconYFraction: CGFloat = 0.052
+    private let iconSizeFraction: CGFloat = 0.079
         
     var body: some View {
         GeometryReader { geoProxy in
@@ -44,10 +48,21 @@ struct PlaylistDetailsView: View {
                     VStack(spacing: 20) {
                         HStack(spacing: 25) {
                             RoundedRectangleWebImageView(url: URL(string: vmPlaylist.detailsPlaylist?.thumbnailURL ?? ""), thumbnail: "music.microphone", radius: 15)
+                                .overlay {
+                                    GeometryReader { proxy in
+                                        let side = proxy.size.width
+                                        Image("ic_splash")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 20, height: 20)
+                                            .background(Circle().fill(Color("#000000")))
+                                            .position(x: (side * iconXFraction) + (side * iconSizeFraction / 2), y: (side * iconYFraction) + (side * iconSizeFraction / 2))
+                                    }
+                                }
                                 .frame(width: 200, height: 200)
                                 .skeleton(active: vmPlaylist.isLoading)
                                 .opacity(showImage ? 1 : 0)
-                                .scaleEffect(showImage ? 1 : 0.9) // Optional
+                                .scaleEffect(showImage ? 1 : 0.9)
                                 .animation(.easeOut(duration: 0.5), value: showImage)
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(vmPlaylist.detailsPlaylist?.name ?? "Unknown")

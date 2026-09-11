@@ -21,7 +21,7 @@ struct QueueItemView: View {
     }
     
     let song: SongModel
-    
+        
     var body: some View {
         HStack(spacing: 12) {
             RoundedRectangleWebImageView(url: URL(string: song.thumbnailURL ?? ""), radius: 5)
@@ -40,6 +40,29 @@ struct QueueItemView: View {
                     .foregroundStyle(theme.subText(isDark: isDark))
             }
             .lineLimit(1)
+            
+            Spacer()
+            
+            HStack(spacing: 20) {
+                Image(systemName: "line.3.horizontal")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .foregroundStyle(theme.theme.accent.opacity(0.25))
+                if player.state != .playing && player.currentSong?.id != song.id {
+                    Button {
+                        if let index = player.queueSongsList.firstIndex(where: { $0.id == song.id }) {
+                            player.removeFromQueue(at: index)
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .resizable()
+                            .frame(width: 18, height: 18)
+                            .foregroundStyle(theme.subText(isDark: isDark).opacity(0.25))
+                    }
+                }
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.horizontal, 12)

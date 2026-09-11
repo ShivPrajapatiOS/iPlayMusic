@@ -42,10 +42,71 @@ struct SongsView: View {
             ZStack {
                 theme.background(isDark: isDark).ignoresSafeArea()
                 ScrollView(.vertical, showsIndicators: false) {
-                    LazyVStack {
-                        ForEach(0...20, id: \.self) { song in
-                            SongItemView(song: song1, isLoading: $vmSong.isLoading, vmSongRealm: vmSongRealm, menuAction: { songMenuActionPerform($0, $1) })
-                                .frame(height: 55)
+                    LazyVStack(spacing: 0) {
+                        if !vmSong.songs.isEmpty {
+                            LazyVStack {
+                                ForEach(vmNewRelease.newSongs, id: \.id) { song in
+                                    SongItemView(song: song, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
+                                        .frame(height: 55)
+                                }
+                            }
+                        } else {
+                            VStack(spacing: 20) {
+                                if !vmNewRelease.newSongs.isEmpty {
+                                    VStack {
+                                        HStack {
+                                            Text("New Release")
+                                                .font(.system(size: 20, weight: .semibold, design: .default))
+                                                .foregroundStyle(theme.subText(isDark: isDark).opacity(0.5))
+                                            Spacer()
+                                            Button {
+                                                print("playlist")
+                                            } label: {
+                                                HStack {
+                                                    Image(systemName: "play.fill")
+                                                    Text("All")
+                                                }
+                                                .font(.system(size: 15, weight: .medium, design: .default))
+                                                .foregroundStyle(Color("#FFFFFF"))
+                                                .padding(.init(top: 8, leading: 15, bottom: 8, trailing: 15))
+                                                .background {
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .fill(theme.theme.primary)
+                                                }
+                                            }
+
+                                        }
+                                        .frame(height: 45)
+                                        LazyVStack {
+                                            ForEach(vmNewRelease.newSongs, id: \.id) { song in
+                                                SongItemView(song: song, isLoading: $vmNewRelease.isLoading, menuAction: { songMenuActionPerform($0, $1) })
+                                                    .frame(height: 55)
+                                            }
+                                        }
+                                    }
+                                    Text("Like songs to see them here!! ❤️")
+                                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                        .foregroundStyle(theme.subText(isDark: isDark).opacity(0.2))
+                                        .frame(height: 35)
+                                }
+                                if !favoriteSongs.isEmpty {
+                                    VStack {
+                                        Text("Favorite Music 😘")
+                                            .font(.system(size: 20, weight: .semibold, design: .default))
+                                            .foregroundStyle(theme.subText(isDark: isDark).opacity(0.5))
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        LazyVStack {
+                                            ForEach(Array(songObjs.enumerated()), id: \.element.id) { index, favoriteSong in
+                                                SongItemView(song: favoriteSong, isLoading: $vmSong.isLoading, menuAction: { songMenuActionPerform($0, $1) })
+                                                    .frame(height: 55)
+                                                    .onTapGesture {
+                                                        player.setupPlay(songs: songObjs, playIndex: index)
+                                                    }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding(.horizontal)
@@ -285,17 +346,10 @@ struct SongItemView: View {
         .contextMenu {
             VStack {
                 Button {
+                    isLiked.toggle()
                     menuAction(.like, song)
                 } label: {
                     Label(isLiked ? "Unfavorite" : "Favorite", systemImage: isLiked ? "heart.fill" : "heart")
-                }
-                if isDownloaded {
-                    Button {
-                        menuAction(.delete, song)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
-                            .tint(.red)
-                    }
                 }
                 if isAddedToPlaylist {
                     Button {
@@ -306,7 +360,14 @@ struct SongItemView: View {
                 } else {
                     playlistsMenu
                 }
-                
+                if isDownloaded {
+                    Button {
+                        menuAction(.delete, song)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                            .tint(.red)
+                    }
+                }
             }
         }
         .onAppear {
@@ -344,7 +405,8 @@ struct SongItemView: View {
             }
         } trailingActions: { context in
             SwipeAction {
-                print("Like")
+                isLiked.toggle()
+                menuAction(.like, song)
                 context.state.wrappedValue = .closed
             } label: { _ in
                 Image(systemName: "heart")
@@ -362,6 +424,11 @@ struct SongItemView: View {
         .swipeMinimumDistance(25)
         .swipeActionsStyle(.mask)
         .swipeEnabled(true )
+        .onAppear {
+            isLiked = vmSongRealm.isSongLiked(songId: song.id)
+            isAddedToPlaylist = vmSongRealm.isAddedToPlaylist(songId: song.id)
+            isDownloaded = SongDownloadManager.shared.isDownloaded(songId: song.id)
+        }
 #endif
     }
     
@@ -423,8 +490,9 @@ struct SongItemView: View {
 }
 
 #Preview {
-    SongsView()
+//    SongsView()
 //    SongItemView(song: song1, isLoading: .constant(false), menuAction: { _, _ in })
+    ContentView()
 }
 
 

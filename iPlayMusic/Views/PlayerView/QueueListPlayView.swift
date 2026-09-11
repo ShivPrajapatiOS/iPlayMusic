@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct QueueListPlayView: View {
     @Environment(\.colorScheme) private var systemScheme
@@ -22,6 +23,8 @@ struct QueueListPlayView: View {
     
     @Binding var isShow: Bool
     
+    @State private var dropTargetIndex: Int? = nil
+    
     var body: some View {
         ZStack {
             theme.background(isDark: isDark)
@@ -31,12 +34,43 @@ struct QueueListPlayView: View {
                     ForEach(Array(player.queueSongsList.enumerated()), id: \.element.id) { (index, song) in
                         QueueItemView(song: song)
                             .frame(height: 50)
+                            .onDrag {
+                                return NSItemProvider(object: song.id as NSString)
+                            }
                             .overlay(alignment: .bottom, content: {
                                 if player.queueSongsList.last?.id != song.id {
-                                    theme.border(isDark: isDark).opacity(0.25)
-                                        .frame(height: 1)
+                                    if dropTargetIndex == index {
+                                        Color.green
+                                            .frame(height: 1)
+                                    } else {
+                                        theme.border(isDark: isDark).opacity(0.25)
+                                            .frame(height: 1)
+                                    }
                                 }
                             })
+                            .onDrop(
+                                of: [.text],
+                                isTargeted: Binding(
+                                    get: { dropTargetIndex == index },
+                                    set: { hovering in
+                                        if hovering {
+                                            dropTargetIndex = index
+                                        } else {
+                                            dropTargetIndex = nil
+                                        }
+                                    }
+                                )
+                            ) { providers in
+                                guard let provider = providers.first else { return false }
+                                _ = provider.loadObject(ofClass: NSString.self) { value, _ in
+                                    guard let draggedId = value as? String else { return }
+                                    DispatchQueue.main.async {
+                                        player.moveSong(id: draggedId, to: index)
+                                        dropTargetIndex = nil
+                                    }
+                                }
+                                return true
+                            }
                             .onTapGesture {
                                 player.playFromPlaylist(index: index)
                             }

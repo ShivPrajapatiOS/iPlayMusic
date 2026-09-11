@@ -7,49 +7,47 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "4A4677EA-1436-434C-8A17-B4C638D1B26F"
+            uuid = "BD63E90A-E8C3-4221-B353-B057158CAFFD"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "iPlayMusic/Managers/PlayerManager.swift"
+            filePath = "iPlayMusic/ViewModels/RealmViewModel/MyPlaylistRealmViewModel.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "545"
-            endingLineNumber = "545"
-            landmarkName = "mediaMetaDataDidChange(_:)"
+            startingLineNumber = "144"
+            endingLineNumber = "144"
+            landmarkName = "removeSongsAndDeletePlaylist(playlistId:hasNetwork:)"
             landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "6C9AD03D-48AF-4BFE-867C-8F8898394D16"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "iPlayMusic/ViewModels/RealmViewModel/SongRealmViewModel.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "85"
-            endingLineNumber = "85"
-            landmarkName = "deleteDownloadedSong(songId:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "07D998C2-7796-4BB7-BA1C-8FF3CF9B75D8"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "iPlayMusic/Managers/AudioFileManager.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "129"
-            endingLineNumber = "129"
-            landmarkName = "deleteAudio(fileName:)"
-            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "BD63E90A-E8C3-4221-B353-B057158CAFFD - 55af211a562ff630"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for iPlayMusic.MyPlaylistRealmViewModel.removeSongsAndDeletePlaylist(playlistId: RealmSwift.ObjectId, hasNetwork: Swift.Bool) async throws -&gt; ()"
+                  moduleName = "iPlayMusic.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/shiv/Documents/My%20Work/iPlayMusics/iPlayMusic/ViewModels/RealmViewModel/MyPlaylistRealmViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "144"
+                  endingLineNumber = "144">
+               </Location>
+               <Location
+                  uuid = "BD63E90A-E8C3-4221-B353-B057158CAFFD - 85bdc3edc6ece9e1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (iPlayMusic.SongRealmModel) -&gt; RealmSwift.ObjectId in iPlayMusic.MyPlaylistRealmViewModel.removeSongsAndDeletePlaylist(playlistId: RealmSwift.ObjectId, hasNetwork: Swift.Bool) async throws -&gt; ()"
+                  moduleName = "iPlayMusic.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/shiv/Documents/My%20Work/iPlayMusics/iPlayMusic/ViewModels/RealmViewModel/MyPlaylistRealmViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "144"
+                  endingLineNumber = "144">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

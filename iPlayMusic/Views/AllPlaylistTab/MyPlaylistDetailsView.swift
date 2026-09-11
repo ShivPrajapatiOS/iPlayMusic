@@ -161,13 +161,11 @@ struct MyPlaylistDetailsView: View {
                 Button("Delete", role: .destructive) {
                     Task {
                         do {
-                            if network.isConnected {
-                                try await vmMyPlaylist.deleteDeletePlaylistById(playlistId: deleteMyPlaylist._id)
-                                dismiss()
-                            } else {
-                                try await vmMyPlaylist.softDeletePlaylistById(playlistId: deleteMyPlaylist._id)
-                                dismiss()
-                            }
+                            try await vmMyPlaylist.removeSongsAndDeletePlaylist(
+                                playlistId: deleteMyPlaylist._id,
+                                hasNetwork: network.isConnected
+                            )
+                            dismiss()
                         } catch {
                             vmMyPlaylist.errorMessage = error.localizedDescription
                         }

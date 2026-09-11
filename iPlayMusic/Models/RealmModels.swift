@@ -434,3 +434,13 @@ class ArtistRealmModel: Object, ObjectKeyIdentifiable {
         return model
     }
 }
+
+
+// MARK: - QueueSongRealmModel
+class QueueSongRealmModel: Object, ObjectKeyIdentifiable {
+    @Persisted(primaryKey: true) var _id: ObjectId = ObjectId.generate()
+    @Persisted var song_id: String
+    @Persisted var order: Int = 0
+    @Persisted var songDataJSON: String
+    @Persisted var addedAt: Date = Date()
+}
